@@ -79,7 +79,8 @@ const TR = {
     without_bkf:"Без завтр.",
     skip:"пропуск", restored:"восстановлен",
     checkins_today:"Въезды", checkouts_today:"Выезды",
-    schedule:"Расписание", clean_plan:"План уборок", no_clean_days:"Нет запланированных уборок на эти дни",
+    schedule:"Расписание", clean_plan:"План уборок", clean_freq:"Частота уборки", clean_daily:"Каждый день", clean_checkout:"Только при выезде",
+    clean_date_done:"Отмечено убранным", clean_day_status:"Статус на дату",, no_clean_days:"Нет запланированных уборок на эти дни",
     checkout_lbl:"Выезд — нужна уборка", checkin_lbl:"Въезд — подготовить", occupied_lbl:"Занят",
     status_clean:"Убрано", status_dirty:"Не убрано", status_skip:"Не убирать",
   },
@@ -132,7 +133,8 @@ const TR = {
     without_bkf:"Ei aamiaista",
     skip:"ohitettu", restored:"palautettu",
     checkins_today:"Saapumiset", checkouts_today:"Lähdöt",
-    schedule:"Aikataulu", clean_plan:"Siivoussuunnitelma", no_clean_days:"Ei suunniteltuja siivouksia",
+    schedule:"Aikataulu", clean_plan:"Siivoussuunnitelma", clean_freq:"Siivoustiheys", clean_daily:"Joka päivä", clean_checkout:"Vain uloskirjauksessa",
+    clean_date_done:"Merkitty siivotuksi", clean_day_status:"Tila päivälle",, no_clean_days:"Ei suunniteltuja siivouksia",
     checkout_lbl:"Uloskirjaus — siivous", checkin_lbl:"Sisäänkirjaus — valmistele", occupied_lbl:"Varattu",
     status_clean:"Siivottu", status_dirty:"Siivottava", status_skip:"Älä siivoa",
   }
@@ -155,7 +157,7 @@ const dayName = (s,l='ru') => TR[l].days[new Date(s+'T12:00:00').getDay()];
 let me = { role:null, id:null, name:null };
 let lang = 'ru';
 let mainTab='rooms', subTab='day', logFilter='all', dayOffset=0;
-let objects={}, users={}, queue={}, bkfSched={}, changelog=[], objTypes={}, bkfSlots={};
+let objects={}, users={}, queue={}, bkfSched={}, cleanSched={}, changelog=[], objTypes={}, bkfSlots={};
 
 const NOTIFY = { hotel:['senior','admin'], senior:['hotel','admin'], cleaner:['hotel','senior','admin'], admin:[] };
 const ICON   = { hotel:'🏨', senior:'👔', cleaner:'🧹', admin:'⚙' };
@@ -165,6 +167,7 @@ const t = k => (TR[lang]||TR.ru)[k] || k;
 // ── Firebase слушатели ────────────────────────
 function startListeners() {
   onValue(ref(db,'objects'),    s => { objects  = s.val()||{}; renderAll(); });
+  onValue(ref(db,'cleanSched'),   s => { cleanSched = s.val()||{}; renderAll(); });
   onValue(ref(db,'queue'),      s => { queue    = s.val()||{}; renderAll(); });
   onValue(ref(db,'bkfSched'),   s => { bkfSched = s.val()||{}; renderAll(); });
   onValue(ref(db,'changelog'),  s => {
@@ -204,6 +207,109 @@ function hasFeat(typeId, feat) {
   if(!tp.features) return false;
   return tp.features[feat] === true;
 }
+
+
+// ── Расписание уборок по датам ────────────────
+function getCleanDay(objId, dateS) {
+  return cleanSched[objId+'_'+dateS] || { status:'dirty', skipped:false };
+}
+
+function getCleanDaysForObj(o) {
+  // Returns list of dates that need cleaning for this object
+  if(!o.checkinDate || !o.checkoutDate) return [];
+  const days = [];
+  const freq = o.cleanFreq || 'checkout'; // 'daily' or 'checkout'
+  let cur = o.checkinDate;
+  while(cur <= o.checkoutDate) {
+    if(cur === o.checkinDate) { cur = addDays(cur,1); continue; } // no cleaning on checkin day
+    if(cur === o.checkoutDate) { days.push({date:cur, reason:'checkout'}); }
+    else if(freq === 'daily') { days.push({date:cur, reason:'daily'}); }
+    cur = addDays(cur,1);
+  }
+  return days;
+}
+
+function getCleanStatus(objId, dateS) {
+  const c = getCleanDay(objId, dateS);
+  if(c.skipped) return 'skip';
+  return c.status || 'dirty';
+}
+
+async function markCleanDay(objId, dateS, status) {
+  await update(ref(db, 'cleanSched/'+objId+'_'+dateS), { status, updatedBy:me.name, updatedAt:Date.now() });
+  const o = objects[objId];
+  const msg = o?.name+': уборка '+fd(dateS)+' → '+(status==='cleaned'?t('status_clean'):t('status_dirty'));
+  await addLog(objId, msg, '#2a7acf');
+  await notify(me.role, msg);
+}
+window.markCleanDay = markCleanDay;
+
+async function toggleSkipCleanDay(objId, dateS) {
+  const cur = getCleanDay(objId, dateS);
+  await update(ref(db, 'cleanSched/'+objId+'_'+dateS), { skipped:!cur.skipped, updatedBy:me.name, updatedAt:Date.now() });
+  const o = objects[objId];
+  const msg = o?.name+': уборка '+fd(dateS)+' — '+(cur.skipped?t('restored'):t('skip'));
+  await addLog(objId, msg, '#888');
+  await notify(me.role, msg);
+}
+window.toggleSkipCleanDay = toggleSkipCleanDay;
+
+
+// ── Расписание уборок по датам ────────────────
+function getCleanSched(objId, dateS) {
+  return cleanSched[objId+'_'+dateS] || { status:'pending', assignedTo:[] };
+}
+
+function getCleanStatus(objId, dateS) {
+  return getCleanSched(objId, dateS).status || 'pending';
+}
+
+// Создать расписание уборок для бронирования
+async function createCleanSchedule(o) {
+  if(!hasFeat(o.typeId,'cleaning')) return;
+  if(!o.checkinDate||!o.checkoutDate) return;
+  const upd = {};
+  let cur = o.checkinDate;
+  while(cur <= o.checkoutDate) {
+    // День въезда — уборки нет
+    // День выезда — всегда уборка
+    // Промежуточные — только если cleanDaily
+    const isCheckin  = cur === o.checkinDate;
+    const isCheckout = cur === o.checkoutDate;
+    const needClean  = isCheckout || (!isCheckin && o.cleanDaily);
+    if(needClean) {
+      const k = o.id+'_'+cur;
+      if(!cleanSched[k]) upd[k] = { status:'pending', date:cur, objId:o.id, isCheckout, isDaily:!isCheckout };
+    }
+    cur = addDays(cur, 1);
+  }
+  if(Object.keys(upd).length) await update(ref(db,'cleanSched'), upd);
+}
+
+async function markCleanDone(objId, dateS, userId) {
+  const u = Object.values(users).find(u=>u.id===userId);
+  await update(ref(db,'cleanSched/'+objId+'_'+dateS), { status:'done', doneBy:u?.name||userId, doneAt:Date.now() });
+  const o = objects[objId];
+  const msg = o?.name+': ✓ уборка '+fd(dateS)+' ('+( u?.name||'')+')';
+  await addLog(objId, msg, '#2a7acf');
+  await notify('cleaner', msg);
+  // Also mark queue item done if exists
+  const task = Object.entries(queue).find(([,q])=>q.roomId===objId&&q.type==='clean'&&!q.done&&(q.assignedTo||[]).includes(userId));
+  if(task) await update(ref(db,'queue/'+task[0]), {done:true, doneBy:userId, doneAt:Date.now()});
+  renderAll();
+}
+window.markCleanDone = markCleanDone;
+
+async function markCleanIssue(objId, dateS, userId) {
+  const u = Object.values(users).find(u=>u.id===userId);
+  await update(ref(db,'cleanSched/'+objId+'_'+dateS), { status:'issue', reportedBy:u?.name||userId, reportedAt:Date.now() });
+  const o = objects[objId];
+  const msg = o?.name+': ⚠ проблема при уборке '+fd(dateS)+' ('+(u?.name||'')+')';
+  await addLog(objId, msg, '#e24b4a');
+  await notify('cleaner', msg);
+  renderAll();
+}
+window.markCleanIssue = markCleanIssue;
 
 // ── Статус объекта ────────────────────────────
 function ostatus(o) {
@@ -270,7 +376,9 @@ async function saveObject(objId) {
   const coutT  = get$('m-coutt')?.value;
   const cl     = get$('m-cl')?.value;
   const bkfN   = get$('m-bkf')?.value;
+  const cleanDaily = get$('m-cleandaily')?.value === 'daily';
   const bkfS   = get$('m-bkfslot')?.value;
+  const cleanFreqEl = get$('m-cleanfreq');
   const guests = parseInt(get$('gc')?.textContent)||o.guests||1;
 
   const upd = { guests, lastChangedBy:me.name, lastChangedAt:Date.now() };
@@ -282,7 +390,9 @@ async function saveObject(objId) {
   if(coutD&&v!=='emp') upd.checkoutDate=coutD;
   if(coutT) upd.checkoutTime=coutT;
   if(bkfN) upd.bkfNeeded=(bkfN==='yes');
+  upd.cleanDaily = cleanDaily;
   if(bkfS) upd.defaultSlotId=bkfS;
+  if(cleanFreqEl) upd.cleanFreq=cleanFreqEl.value;
   if(cl){ upd.skipClean=(cl==='skip'); upd.cleanStatus=cl==='skip'?'dirty':cl; }
 
   await update(ref(db,`objects/${objId}`), upd);
@@ -303,6 +413,7 @@ async function saveObject(objId) {
   // Добавить в очередь
   if(hasFeat(o.typeId,'cleaning')) {
     if(merged.checkout||(!merged.occupied&&prevSt==='occ')) await addToQueue(objId,'clean');
+    if(merged.occupied&&!merged.checkout&&merged.checkinDate&&merged.checkoutDate) await createCleanSchedule({...o,...upd});
   }
   if(hasFeat(o.typeId,'breakfast')&&merged.occupied&&!merged.checkout&&merged.bkfNeeded) {
     await addToQueue(objId,'bkf');
@@ -584,7 +695,14 @@ function openModal(objId) {
         </div>
       </div>`:''}
     </div>
-    ${showClean?`<div class="mrow"><label>${t('cleaning')}</label>
+    ${showClean?`
+    <div class="mrow"><label>${t('clean_freq')}</label>
+      <select id="m-cleanfreq">
+        <option value="checkout" ${(o.cleanFreq||'checkout')==='checkout'?'selected':''}>${t('clean_checkout')}</option>
+        <option value="daily"    ${o.cleanFreq==='daily'?'selected':''}>${t('clean_daily')}</option>
+      </select>
+    </div>
+    <div class="mrow"><label>${t('cleaning')}</label>
       <select id="m-cl">
         <option value="dirty"   ${o.cleanStatus==='dirty'&&!o.skipClean?'selected':''}>${t('need_clean')}</option>
         <option value="cleaned" ${o.cleanStatus==='cleaned'?'selected':''}>${t('cleaned')}</option>
@@ -778,6 +896,10 @@ function queueHTML() {
 }
 
 function myTasksHTML() {
+  // Also show today's cleaning tasks from cleanSched
+  const todayCleans = Object.values(cleanSched).filter(cs =>
+    cs.date===todayStr() && cs.status==='pending'
+  );
   const myTasks=Object.entries(queue).filter(([,q])=>(q.assignedTo||[]).includes(me.id)&&!q.done);
   if(!myTasks.length) return `<div class="empty-state">${t('no_tasks')}</div>`;
   return myTasks.map(([tid,task])=>{
@@ -934,66 +1056,95 @@ function settingsHTML() {
 
 
 function scheduleHTML() {
-  const days = 7;
+  const canAct = me.role==='cleaner'||me.role==='senior'||me.role==='admin';
   let html = '';
-  for(let i=0; i<days; i++){
+  for(let i=0; i<14; i++){
     const baseDate = new Date();
     baseDate.setDate(baseDate.getDate()+i);
     const dateS = ds(baseDate);
     const dayLbl = i===0?t('today'):i===1?t('tomorrow'):`${dayName(dateS,lang)} ${fd(dateS)}`;
 
-    // Find objects needing cleaning this day
-    const checkouts = Object.values(objects).filter(o =>
-      hasFeat(o.typeId,'cleaning') && o.checkoutDate===dateS
-    );
+    // Collect all objects that need cleaning on this date
+    const needClean = [];
+    Object.values(objects).forEach(o => {
+      if(!hasFeat(o.typeId,'cleaning')) return;
+      if(!o.checkinDate || !o.checkoutDate) return;
+      const cleanDays = getCleanDaysForObj(o);
+      const dayEntry = cleanDays.find(d => d.date === dateS);
+      if(!dayEntry) return;
+      const st = getCleanStatus(o.id, dateS);
+      const cd = getCleanDay(o.id, dateS);
+      needClean.push({o, reason: dayEntry.reason, status: st, cd});
+    });
+
+    // Also show checkins (no cleaning but preparation needed)
     const checkins = Object.values(objects).filter(o =>
-      hasFeat(o.typeId,'cleaning') && o.checkinDate===dateS && !o.checkout
-    );
-    const occupied = Object.values(objects).filter(o =>
-      hasFeat(o.typeId,'cleaning') && o.occupied && !o.checkout &&
-      o.checkinDate && o.checkoutDate &&
-      dateS>=o.checkinDate && dateS<=o.checkoutDate
+      hasFeat(o.typeId,'cleaning') && o.checkinDate===dateS && !o.checkout && o.occupied
     );
 
-    if(!checkouts.length && !checkins.length) continue;
+    if(!needClean.length && !checkins.length) continue;
 
     html += `<div class="sched-day">
       <div class="sched-day-hd">
         <div class="sched-day-lbl">${dayLbl}</div>
-        <div class="sched-day-date">${fd(dateS)}</div>
+        <div class="sched-counts">
+          ${needClean.filter(x=>x.status==='cleaned').length}/${needClean.length} убрано
+        </div>
       </div>`;
 
-    if(checkouts.length){
-      html += `<div class="sched-section-lbl checkout-lbl">↑ ${t('checkout_lbl')}</div>`;
-      html += `<div class="sched-pills">` + checkouts.map(o=>{
-        const cleanIcon = o.cleanStatus==='cleaned'?'🔵':o.skipClean?'⚪':'🔴';
-        const cleanLbl  = o.cleanStatus==='cleaned'?t('status_clean'):o.skipClean?t('status_skip'):t('status_dirty');
-        return`<div class="sched-pill co">
-          <span class="sched-obj-name">${o.name}</span>
-          <span class="sched-type">${typeName(o.typeId)}</span>
-          <span class="sched-clean">${cleanIcon} ${cleanLbl}</span>
-        </div>`;
-      }).join('') + `</div>`;
+    if(needClean.length) {
+      const checkoutItems = needClean.filter(x=>x.reason==='checkout');
+      const dailyItems    = needClean.filter(x=>x.reason==='daily');
+
+      if(checkoutItems.length){
+        html += `<div class="sched-section-lbl checkout-lbl">↑ ${t('checkout_lbl')}</div>`;
+        html += checkoutItems.map(({o,status,cd}) => schedPillHTML(o,dateS,status,cd,canAct,'co')).join('');
+      }
+      if(dailyItems.length){
+        html += `<div class="sched-section-lbl" style="color:var(--blue)">🔄 Ежедневная уборка</div>`;
+        html += dailyItems.map(({o,status,cd}) => schedPillHTML(o,dateS,status,cd,canAct,'daily')).join('');
+      }
     }
 
     if(checkins.length){
       html += `<div class="sched-section-lbl checkin-lbl">↓ ${t('checkin_lbl')}</div>`;
-      html += `<div class="sched-pills">` + checkins.map(o=>{
-        const cleanIcon = o.cleanStatus==='cleaned'?'🔵':o.skipClean?'⚪':'🔴';
-        const cleanLbl  = o.cleanStatus==='cleaned'?t('status_clean'):o.skipClean?t('status_skip'):t('status_dirty');
-        return`<div class="sched-pill ci">
+      html += `<div class="sched-pills">`+checkins.map(o=>`
+        <div class="sched-pill ci">
           <span class="sched-obj-name">${o.name}</span>
           <span class="sched-type">${typeName(o.typeId)}</span>
-          <span class="sched-clean">${cleanIcon} ${cleanLbl}</span>
-        </div>`;
-      }).join('') + `</div>`;
+          <span class="sched-clean" style="color:var(--green)">${o.guests||1} гост. · ${o.checkinTime||''}</span>
+        </div>`).join('')+`</div>`;
     }
 
     html += `</div>`;
   }
 
   if(!html) return `<div class="empty-state">${t('no_clean_days')}</div>`;
-  return `<div class="section-lbl">${t('clean_plan')} — 7 ${t('days') || 'дней'}</div>${html}`;
+  return `<div class="section-lbl">${t('clean_plan')} — 14 дней</div>${html}`;
+}
+
+function schedPillHTML(o, dateS, status, cd, canAct, type) {
+  const icon  = status==='cleaned'?'🔵':status==='skip'?'⚪':'🔴';
+  const lbl   = status==='cleaned'?t('status_clean'):status==='skip'?t('status_skip'):t('status_dirty');
+  const updBy = cd.updatedBy ? ` · ${cd.updatedBy}` : '';
+  return `<div class="sched-pill ${type}">
+    <div class="sched-pill-left">
+      <span class="sched-obj-name">${o.name}</span>
+      <span class="sched-type">${typeName(o.typeId)}${o.floor?' · '+o.floor+' эт.':''}</span>
+      <span class="sched-clean">${icon} ${lbl}${updBy}</span>
+    </div>
+    ${canAct&&status!=='cleaned'&&status!=='skip'?`
+    <div class="sched-pill-actions">
+      <button class="sched-btn done" onclick="markCleanDay('${o.id}','${dateS}','cleaned')">✓</button>
+      <button class="sched-btn skip" onclick="toggleSkipCleanDay('${o.id}','${dateS}')">−</button>
+    </div>`:canAct&&status==='cleaned'?`
+    <div class="sched-pill-actions">
+      <button class="sched-btn undo" onclick="markCleanDay('${o.id}','${dateS}','dirty')">↩</button>
+    </div>`:canAct&&status==='skip'?`
+    <div class="sched-pill-actions">
+      <button class="sched-btn undo" onclick="toggleSkipCleanDay('${o.id}','${dateS}')">↩</button>
+    </div>`:''}
+  </div>`;
 }
 
 function renderContent() {
@@ -1292,12 +1443,24 @@ button{cursor:pointer;}
 .checkout-lbl{color:var(--orange);}
 .checkin-lbl{color:var(--green);}
 .sched-pills{display:flex;flex-direction:column;gap:4px;margin-bottom:4px;}
-.sched-pill{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--rs);font-size:11px;}
+.sched-pill{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:7px 9px;border-radius:var(--rs);margin-bottom:4px;}
+.sched-pill-left{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+.sched-pill-actions{display:flex;gap:4px;flex-shrink:0;}
+.sched-btn{font-size:11px;padding:3px 8px;border-radius:var(--rs);border:none;cursor:pointer;font-weight:500;}
+.sched-btn.done{background:var(--green);color:#fff;}
+.sched-btn.skip{background:var(--border);color:var(--text-muted);background:var(--bg);border:0.5px solid var(--borders);}
+.sched-btn.undo{background:var(--bg);border:0.5px solid var(--borders);color:var(--text-muted);}
+.sched-counts{font-size:11px;color:var(--text-muted);}
 .sched-pill.co{background:var(--ol);}
 .sched-pill.ci{background:var(--gl);}
+.sched-pill.daily{background:var(--bl);}
 .sched-obj-name{font-weight:500;min-width:40px;}
 .sched-type{color:var(--text-muted);font-size:10px;flex:1;}
-.sched-clean{font-size:10px;white-space:nowrap;}
+.sched-clean{font-size:10px;flex:1;}
+.sched-day-cnt{font-size:11px;color:var(--orange);font-weight:500;}
+.sched-done-btn{font-size:10px;padding:2px 7px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;cursor:pointer;flex-shrink:0;}
+.sched-issue-btn{font-size:10px;padding:2px 6px;border-radius:var(--rs);border:0.5px solid var(--orange);background:transparent;color:var(--orange);cursor:pointer;flex-shrink:0;}
+.sched-pill{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--rs);font-size:11px;flex-wrap:wrap;}
 
 .toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:12px;padding:8px 16px;border-radius:20px;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
