@@ -22,175 +22,180 @@ const firebaseConfig = {
   appId: "1:327963847461:web:d1d5697ea9c1b2daa208cc"
 };
 
-// CLOUDFLARE WORKER URL — вставь после деплоя
-const WORKER_URL = "";
+const WORKER_URL = ""; // Вставь после деплоя Cloudflare Worker
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
+const db   = getDatabase(app);
 
-// ── Переводы ──────────────────────────────────
-const T = {
+// ── Переводы ──────────────────────────────────────────────
+const TR = {
   ru: {
-    rooms: "Номера", tasks: "Задачи", mytasks: "Мои задачи", breakfast: "Завтраки",
-    log: "Журнал", users: "Пользователи", settings: "Настройки",
-    occupied: "Занят", vacant: "Свободен", checkout: "Выезд", checkin_today: "Въезд сегодня",
-    cleaning_required: "Нужна уборка", cleaned: "Убрано", do_not_clean: "Не убирать",
-    guests: "Гостей", checkin_date: "Дата въезда", checkin_time: "Время въезда",
-    checkout_date: "Дата выезда", checkout_time: "Время выезда",
-    breakfast_needed: "Завтрак нужен", breakfast_not_needed: "Без завтрака",
-    breakfast_time: "Время завтрака", save: "Сохранить", cancel: "Отмена",
-    assign: "Назначить", done: "✓ Выполнено", problem: "⚠ Проблема",
-    today: "Сегодня", tomorrow: "Завтра", yesterday: "Вчера",
-    no_tasks: "Нет назначенных задач.\nОжидайте сообщения от старшего.",
-    no_queue: "Нет задач в очереди",
-    cleaning: "Уборка", bkf: "Завтрак",
-    urgent_checkout: "⚑ Срочно — выезд", checkin_at: "↑ Въезд в",
-    all: "Все", no_log: "Нет записей",
-    add_user: "+ Добавить сотрудника", add_object: "+ Добавить объект",
-    object_name: "Название", object_type: "Тип",
-    type_room: "Номер", type_hostel_room: "Хостел (комната)", type_hostel_bed: "Хостел (кровать)",
-    type_apartment: "Квартира", type_restaurant: "Ресторан",
-    floor: "Этаж", together_with: "Совместно с:",
-    history: "История номера", no_changes: "Нет изменений",
-    logout: "Выйти", skip_bkf: "✕ Пропустить", restore_bkf: "+ Вернуть",
-    edit_bkf: "Редактировать", portions: "порц.",
-    name: "Имя", phone: "WhatsApp номер", email: "Email", password: "Пароль", role: "Роль",
-    role_hotel: "Отель", role_senior: "Старший", role_cleaner: "Уборщик", role_admin: "Админ",
-    disable: "Отключить", enable: "Включить", delete_obj: "Удалить",
-    confirm_delete: "Удалить этот объект? Все данные будут потеряны.",
-    select_cleaner: "Выбрать уборщика",
-    no_objects: "Нет объектов. Добавь в Настройках.",
-    checkins_today: "Въезды сегодня", checkouts_today: "Выезды сегодня",
-    breakfast_today: "Завтраков сегодня", need_cleaning: "К уборке",
-    done_cleaning: "Убрано",
-    without_breakfast: "Без завтр.",
-    skip: "пропуск", restored: "восстановлен",
-    saved: "Сохранено", user_added: "Пользователь добавлен",
-    fill_required: "Заполни имя, email и пароль",
-    access_disabled: "Доступ отключён. Обратитесь к администратору.",
-    wrong_password: "Неверный email или пароль",
-    days_ru: ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"],
-    months_ru: ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],
+    rooms:"Номера", tasks:"Задачи", mytasks:"Мои задачи", breakfast:"Завтраки",
+    log:"Журнал", users:"Пользователи", settings:"Настройки",
+    obj_types:"Типы объектов", bkf_slots:"Слоты завтраков",
+    occupied:"Занят", vacant:"Свободен", checkout:"Выезд", checkin_today:"Въезд сегодня",
+    need_clean:"Нужна уборка", cleaned:"Убрано", no_clean:"Не убирать",
+    guests:"Гостей", checkin_date:"Дата въезда", checkin_time:"Время въезда",
+    checkout_date:"Дата выезда", checkout_time:"Время выезда",
+    bkf_yes:"Завтрак нужен", bkf_no:"Без завтрака", bkf_time:"Время завтрака",
+    save:"Сохранить", cancel:"Отмена", assign:"Назначить",
+    done:"✓ Выполнено", problem:"⚠ Проблема",
+    today:"Сегодня", tomorrow:"Завтра", yesterday:"Вчера",
+    no_tasks:"Нет назначенных задач.\nОжидайте сообщения от старшего.",
+    no_queue:"Нет задач в очереди", cleaning:"Уборка", bkf:"Завтрак",
+    urgent:"⚑ Срочно — выезд", checkin_at:"↑ Въезд в",
+    all:"Все", no_log:"Нет записей",
+    add_user:"+ Добавить сотрудника", add_obj:"+ Добавить объект",
+    add_type:"+ Добавить тип", add_slot:"+ Добавить слот",
+    obj_name:"Название", obj_type:"Тип объекта", floor:"Этаж",
+    together:"Совместно с:", history:"История", no_changes:"Нет изменений",
+    logout:"Выйти", skip_bkf:"✕ Пропустить", restore_bkf:"+ Вернуть",
+    edit_bkf:"Редактировать", portions:"порц.",
+    role_hotel:"Отель", role_senior:"Старший", role_cleaner:"Уборщик", role_admin:"Админ",
+    disable:"Отключить", enable:"Включить", del:"Удалить",
+    confirm_del:"Удалить? Все данные будут потеряны.",
+    confirm_del_type:"Удалить этот тип? Объекты с этим типом останутся.",
+    no_objs:"Нет объектов. Добавь в Настройках.",
+    no_types:"Нет типов. Добавь тип сначала.",
+    saved:"Сохранено", user_added:"Пользователь добавлен",
+    fill_req:"Заполни обязательные поля",
+    access_off:"Доступ отключён. Обратитесь к администратору.",
+    wrong_pass:"Неверный email или пароль",
+    type_name:"Название типа",
+    features:"Функции типа",
+    feat_clean:"Уборка",
+    feat_occupied:"Занят/свободен",
+    feat_guests:"Гости и даты",
+    feat_breakfast:"Завтраки",
+    slot_name:"Название слота",
+    slot_from:"С",
+    slot_to:"До",
+    days:["Вс","Пн","Вт","Ср","Чт","Пт","Сб"],
+    name:"Имя", phone:"WhatsApp номер", email:"Email", password:"Пароль", role:"Роль",
+    select_cleaner:"Выбрать уборщика",
+    without_bkf:"Без завтр.",
+    skip:"пропуск", restored:"восстановлен",
+    checkins_today:"Въезды", checkouts_today:"Выезды",
   },
   fi: {
-    rooms: "Huoneet", tasks: "Tehtävät", mytasks: "Omat tehtävät", breakfast: "Aamiaiset",
-    log: "Loki", users: "Käyttäjät", settings: "Asetukset",
-    occupied: "Varattu", vacant: "Vapaa", checkout: "Uloskirjaus", checkin_today: "Sisäänkirjaus tänään",
-    cleaning_required: "Siivous tarvitaan", cleaned: "Siivottu", do_not_clean: "Älä siivoa",
-    guests: "Vieraat", checkin_date: "Saapumispäivä", checkin_time: "Saapumisaika",
-    checkout_date: "Lähtöpäivä", checkout_time: "Lähtöaika",
-    breakfast_needed: "Aamiainen kyllä", breakfast_not_needed: "Ei aamiaista",
-    breakfast_time: "Aamiaisaika", save: "Tallenna", cancel: "Peruuta",
-    assign: "Määritä", done: "✓ Valmis", problem: "⚠ Ongelma",
-    today: "Tänään", tomorrow: "Huomenna", yesterday: "Eilen",
-    no_tasks: "Ei tehtäviä.", no_queue: "Ei tehtäviä jonossa",
-    cleaning: "Siivous", bkf: "Aamiainen",
-    urgent_checkout: "⚑ Kiireellinen — uloskirjaus", checkin_at: "↑ Sisäänkirjaus klo",
-    all: "Kaikki", no_log: "Ei merkintöjä",
-    add_user: "+ Lisää henkilö", add_object: "+ Lisää kohde",
-    object_name: "Nimi", object_type: "Tyyppi",
-    type_room: "Huone", type_hostel_room: "Hostelli (huone)", type_hostel_bed: "Hostelli (sänky)",
-    type_apartment: "Asunto", type_restaurant: "Ravintola",
-    floor: "Kerros", together_with: "Yhdessä:",
-    history: "Huoneen historia", no_changes: "Ei muutoksia",
-    logout: "Kirjaudu ulos", skip_bkf: "✕ Ohita", restore_bkf: "+ Palauta",
-    edit_bkf: "Muokkaa", portions: "ann.",
-    name: "Nimi", phone: "WhatsApp numero", email: "Sähköposti", password: "Salasana", role: "Rooli",
-    role_hotel: "Hotelli", role_senior: "Esimies", role_cleaner: "Siivooja", role_admin: "Admin",
-    disable: "Poista käytöstä", enable: "Ota käyttöön", delete_obj: "Poista",
-    confirm_delete: "Poistetaanko tämä kohde? Kaikki tiedot menetetään.",
-    select_cleaner: "Valitse siivooja",
-    no_objects: "Ei kohteita. Lisää Asetuksissa.",
-    checkins_today: "Saapumiset tänään", checkouts_today: "Lähdöt tänään",
-    breakfast_today: "Aamiaiset tänään", need_cleaning: "Siivottavaa",
-    done_cleaning: "Siivottu",
-    without_breakfast: "Ei aamiaista",
-    skip: "ohitettu", restored: "palautettu",
-    saved: "Tallennettu", user_added: "Käyttäjä lisätty",
-    fill_required: "Täytä nimi, sähköposti ja salasana",
-    access_disabled: "Pääsy estetty. Ota yhteys järjestelmänvalvojaan.",
-    wrong_password: "Väärä sähköposti tai salasana",
-    days_ru: ["Su","Ma","Ti","Ke","To","Pe","La"],
-    months_ru: ["tam","hel","maa","huh","tou","kes","hei","elo","syy","lok","mar","jou"],
+    rooms:"Huoneet", tasks:"Tehtävät", mytasks:"Omat tehtävät", breakfast:"Aamiaiset",
+    log:"Loki", users:"Käyttäjät", settings:"Asetukset",
+    obj_types:"Kohdetyypit", bkf_slots:"Aamiaisajat",
+    occupied:"Varattu", vacant:"Vapaa", checkout:"Uloskirjaus", checkin_today:"Sisäänkirjaus tänään",
+    need_clean:"Siivous tarvitaan", cleaned:"Siivottu", no_clean:"Älä siivoa",
+    guests:"Vieraat", checkin_date:"Saapumispäivä", checkin_time:"Saapumisaika",
+    checkout_date:"Lähtöpäivä", checkout_time:"Lähtöaika",
+    bkf_yes:"Aamiainen kyllä", bkf_no:"Ei aamiaista", bkf_time:"Aamiaisaika",
+    save:"Tallenna", cancel:"Peruuta", assign:"Määritä",
+    done:"✓ Valmis", problem:"⚠ Ongelma",
+    today:"Tänään", tomorrow:"Huomenna", yesterday:"Eilen",
+    no_tasks:"Ei tehtäviä.", no_queue:"Ei tehtäviä jonossa",
+    cleaning:"Siivous", bkf:"Aamiainen",
+    urgent:"⚑ Kiireellinen — uloskirjaus", checkin_at:"↑ Sisäänkirjaus klo",
+    all:"Kaikki", no_log:"Ei merkintöjä",
+    add_user:"+ Lisää henkilö", add_obj:"+ Lisää kohde",
+    add_type:"+ Lisää tyyppi", add_slot:"+ Lisää aika",
+    obj_name:"Nimi", obj_type:"Kohdetyyppi", floor:"Kerros",
+    together:"Yhdessä:", history:"Historia", no_changes:"Ei muutoksia",
+    logout:"Kirjaudu ulos", skip_bkf:"✕ Ohita", restore_bkf:"+ Palauta",
+    edit_bkf:"Muokkaa", portions:"ann.",
+    role_hotel:"Hotelli", role_senior:"Esimies", role_cleaner:"Siivooja", role_admin:"Admin",
+    disable:"Poista käytöstä", enable:"Ota käyttöön", del:"Poista",
+    confirm_del:"Poistetaanko? Kaikki tiedot menetetään.",
+    confirm_del_type:"Poistetaanko tämä tyyppi?",
+    no_objs:"Ei kohteita. Lisää Asetuksissa.",
+    no_types:"Ei tyyppejä.",
+    saved:"Tallennettu", user_added:"Käyttäjä lisätty",
+    fill_req:"Täytä pakolliset kentät",
+    access_off:"Pääsy estetty.",
+    wrong_pass:"Väärä sähköposti tai salasana",
+    type_name:"Tyypin nimi",
+    features:"Ominaisuudet",
+    feat_clean:"Siivous",
+    feat_occupied:"Varattu/vapaa",
+    feat_guests:"Vieraat ja päivämäärät",
+    feat_breakfast:"Aamiaiset",
+    slot_name:"Ajan nimi",
+    slot_from:"Alkaen",
+    slot_to:"Asti",
+    days:["Su","Ma","Ti","Ke","To","Pe","La"],
+    name:"Nimi", phone:"WhatsApp numero", email:"Sähköposti", password:"Salasana", role:"Rooli",
+    select_cleaner:"Valitse siivooja",
+    without_bkf:"Ei aamiaista",
+    skip:"ohitettu", restored:"palautettu",
+    checkins_today:"Saapumiset", checkouts_today:"Lähdöt",
   }
 };
 
 // ── Утилиты ───────────────────────────────────
 const ds = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const addD = (base,n) => { const d=new Date(base+'T12:00:00'); d.setDate(d.getDate()+n); return d; };
+const addDays = (s,n) => { const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return ds(d); };
 const todayStr = () => ds(new Date());
-const fd = (s,lang='ru') => {
-  if(!s) return '—';
-  const p=s.split('-');
-  return `${p[2]}.${p[1]}`;
+const fd = s => { if(!s)return'—'; const p=s.split('-'); return`${p[2]}.${p[1]}`; };
+const fdt = (ts,l='ru') => {
+  if(!ts)return'';
+  const d=new Date(ts), h=String(d.getHours()).padStart(2,'0'), m=String(d.getMinutes()).padStart(2,'0');
+  const isToday = d.toDateString()===new Date().toDateString();
+  return isToday ? `${TR[l].today} ${h}:${m}` : `${d.getDate()}.${d.getMonth()+1} ${h}:${m}`;
 };
-const fdt = (ts,lang='ru') => {
-  if(!ts) return '';
-  const d=new Date(ts);
-  const t=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  const l=T[lang]||T.ru;
-  return d.toDateString()===new Date().toDateString()?`${l.today} ${t}`:`${d.getDate()}.${d.getMonth()+1} ${t}`;
-};
-const dayName = (s,lang='ru') => (T[lang]||T.ru).days_ru[new Date(s+'T12:00:00').getDay()];
+const dayName = (s,l='ru') => TR[l].days[new Date(s+'T12:00:00').getDay()];
 
 // ── Состояние ─────────────────────────────────
-let currentUser=null, currentRole=null, currentUserId=null, currentUserName=null;
-let lang='ru';
+let me = { role:null, id:null, name:null };
+let lang = 'ru';
 let mainTab='rooms', subTab='day', logFilter='all', dayOffset=0;
-let objects={}, users={}, queue={}, bkfSchedule={}, changelog=[];
+let objects={}, users={}, queue={}, bkfSched={}, changelog=[], objTypes={}, bkfSlots={};
 
-// Уведомления по ролям
-const NOTIFY_ROUTES = {
-  hotel:   ['senior','admin'],
-  senior:  ['hotel','admin'],
-  cleaner: ['hotel','senior','admin'],
-  admin:   []
-};
-const ROLE_ICONS = { hotel:'🏨', senior:'👔', cleaner:'🧹', admin:'⚙' };
+const NOTIFY = { hotel:['senior','admin'], senior:['hotel','admin'], cleaner:['hotel','senior','admin'], admin:[] };
+const ICON   = { hotel:'🏨', senior:'👔', cleaner:'🧹', admin:'⚙' };
 
-// ── Firebase слушатели ─────────────────────────
+const t = k => (TR[lang]||TR.ru)[k] || k;
+
+// ── Firebase слушатели ────────────────────────
 function startListeners() {
-  onValue(ref(db,'objects'), snap => { objects=snap.val()||{}; renderAll(); });
-  onValue(ref(db,'queue'),   snap => { queue=snap.val()||{};   renderAll(); });
-  onValue(ref(db,'bkfSchedule'), snap => { bkfSchedule=snap.val()||{}; renderAll(); });
-  onValue(ref(db,'changelog'),   snap => {
-    const raw=snap.val()||{};
-    changelog=Object.values(raw).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,100);
+  onValue(ref(db,'objects'),    s => { objects  = s.val()||{}; renderAll(); });
+  onValue(ref(db,'queue'),      s => { queue    = s.val()||{}; renderAll(); });
+  onValue(ref(db,'bkfSched'),   s => { bkfSched = s.val()||{}; renderAll(); });
+  onValue(ref(db,'changelog'),  s => {
+    changelog = Object.values(s.val()||{}).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,120);
     renderAll();
   });
-  onValue(ref(db,'users'), snap => { users=snap.val()||{}; });
+  onValue(ref(db,'users'),      s => { users    = s.val()||{}; });
+  onValue(ref(db,'objTypes'),   s => { objTypes = s.val()||{}; renderAll(); });
+  onValue(ref(db,'bkfSlots'),   s => { bkfSlots = s.val()||{}; renderAll(); });
 }
 
-// ── WhatsApp ───────────────────────────────────
-async function sendNotifications(fromRole, message) {
-  const recipients = NOTIFY_ROUTES[fromRole]||[];
-  if(!recipients.length||!WORKER_URL) return;
-  const phones=[];
-  Object.values(users).forEach(u=>{
-    if(recipients.includes(u.role)&&u.phone&&u.active!==false) phones.push(u.phone);
-  });
+// ── WhatsApp ──────────────────────────────────
+async function notify(fromRole, msg) {
+  const roles = NOTIFY[fromRole]||[];
+  if(!roles.length||!WORKER_URL) return;
+  const phones = Object.values(users)
+    .filter(u => roles.includes(u.role) && u.phone && u.active!==false)
+    .map(u => u.phone);
   if(!phones.length) return;
   try {
-    await fetch(WORKER_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phones, message:`${ROLE_ICONS[fromRole]||''} ${currentUserName}: ${message}`})
+    await fetch(WORKER_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phones, message:`${ICON[fromRole]||''} ${me.name}: ${msg}` })
     });
-  } catch(e){ console.warn('WA:',e); }
+  } catch(e){ console.warn('WA',e); }
 }
 
-// ── Журнал ────────────────────────────────────
 async function addLog(objId, action, color) {
-  await push(ref(db,'changelog'),{
-    roomId:objId||null, action, by:currentUserName||'?',
-    byRole:currentRole, ts:Date.now(), color:color||'#888'
-  });
+  await push(ref(db,'changelog'), { roomId:objId||null, action, by:me.name||'?', byRole:me.role, ts:Date.now(), color:color||'#888' });
 }
 
-// ── Вспомогательные ───────────────────────────
-const t = k => (T[lang]||T.ru)[k]||k;
+// ── Тип объекта — функции ─────────────────────
+function getType(typeId) { return objTypes[typeId]||{}; }
+function typeName(typeId) { return getType(typeId).name || typeId || ''; }
+function hasFeat(typeId, feat) {
+  const tp = getType(typeId);
+  if(!tp.features) return false;
+  return tp.features[feat] === true;
+}
 
+// ── Статус объекта ────────────────────────────
 function ostatus(o) {
   if(!o) return 'emp';
   if(o.checkout) return 'co';
@@ -199,187 +204,265 @@ function ostatus(o) {
   return 'emp';
 }
 function olabel(o) {
-  if(!o) return t('vacant');
-  if(o.checkout) return t('checkout');
-  if(o.checkinDate===todayStr()&&!o.occupied) return t('checkin_today');
-  if(o.occupied) return t('occupied');
+  const s = ostatus(o);
+  if(s==='co') return t('checkout');
+  if(s==='ci') return t('checkin_today');
+  if(s==='occ') return t('occupied');
   return t('vacant');
 }
 function priLabel(o) {
   if(!o) return null;
-  if(o.checkout) return t('urgent_checkout');
+  if(o.checkout) return t('urgent');
   if(o.checkinDate===todayStr()&&!o.occupied) return `${t('checkin_at')} ${o.checkinTime||''}`;
   return null;
 }
 function getBkf(objId, dateS) {
-  return bkfSchedule[`${objId}_${dateS}`]||{time:'08:00',noBkf:false};
+  return bkfSched[`${objId}_${dateS}`] || { slotId:null, noBkf:false };
 }
+
+// Посчитать завтраки на день
 function calcBkfDay(dateS) {
-  const map={}; let total=0;
-  Object.values(objects).forEach(o=>{
+  const map = {}; // slotId -> [{obj, slotLabel}]
+  let total = 0;
+  Object.values(objects).forEach(o => {
+    if(!hasFeat(o.typeId,'breakfast')) return;
     if(!o.occupied||!o.checkinDate||!o.checkoutDate) return;
     if(dateS<o.checkinDate||dateS>o.checkoutDate) return;
-    const b=getBkf(o.id,dateS);
-    if(!b.noBkf){ total+=o.guests||1; if(!map[b.time])map[b.time]=[]; map[b.time].push(o); }
+    const b = getBkf(o.id, dateS);
+    if(b.noBkf) return;
+    const slotId = b.slotId || 'default';
+    const slot = bkfSlots[slotId];
+    const slotLabel = slot ? `${slot.from}–${slot.to}` : (b.customTime||'08:00');
+    total += (o.guests||1);
+    if(!map[slotLabel]) map[slotLabel]=[];
+    map[slotLabel].push(o);
   });
-  return{total,map};
+  return { total, map };
 }
 
-function typeLabel(type) {
-  const map={room:t('type_room'),hostel_room:t('type_hostel_room'),hostel_bed:t('type_hostel_bed'),apartment:t('type_apartment'),restaurant:t('type_restaurant')};
-  return map[type]||type||'';
+function sortedObjects() {
+  return Object.values(objects).sort((a,b)=>{
+    const p = o => { const s=ostatus(o); return s==='co'?0:s==='ci'?1:s==='occ'?2:3; };
+    return p(a)-p(b);
+  });
 }
 
-// ── Действия ──────────────────────────────────
+// ── Действия — Объект ─────────────────────────
 async function saveObject(objId) {
-  const o=objects[objId]; if(!o) return;
-  const prevSt=ostatus(o);
-  const v      = document.getElementById('m-st')?.value;
-  const cinD   = document.getElementById('m-cind')?.value;
-  const cinT   = document.getElementById('m-cint')?.value;
-  const coutD  = document.getElementById('m-coutd')?.value;
-  const coutT  = document.getElementById('m-coutt')?.value;
-  const cl     = document.getElementById('m-cl')?.value;
-  const bkfEl  = document.getElementById('m-bkf')?.value;
-  const bkfTEl = document.getElementById('m-bkft')?.value;
-  const guests = parseInt(document.getElementById('gc')?.textContent)||o.guests||1;
+  const o = objects[objId]; if(!o) return;
+  const prevSt = ostatus(o);
+  const get$ = id => document.getElementById(id);
 
-  const upd={guests};
-  if(v){upd.occupied=(v==='occ'||v==='co');upd.checkout=(v==='co');}
-  if(v==='emp'){upd.checkinDate=null;upd.checkoutDate=null;upd.occupied=false;upd.checkout=false;upd.bkfNeeded=false;}
-  if(v==='ci'){upd.checkinDate=todayStr();upd.occupied=false;upd.checkout=false;}
-  if(cinD&&v!=='emp')upd.checkinDate=cinD;
-  if(cinT)upd.checkinTime=cinT;
-  if(coutD&&v!=='emp')upd.checkoutDate=coutD;
-  if(coutT)upd.checkoutTime=coutT;
-  if(bkfEl){upd.bkfNeeded=(bkfEl==='yes');}
-  if(bkfTEl&&upd.bkfNeeded!==false)upd.bkfTime=bkfTEl;
-  if(cl){upd.skipClean=(cl==='skip');upd.cleanStatus=cl==='skip'?'dirty':cl;}
-  upd.lastChangedBy=currentUserName;upd.lastChangedAt=Date.now();
+  const v      = get$('m-st')?.value;
+  const cinD   = get$('m-cind')?.value;
+  const cinT   = get$('m-cint')?.value;
+  const coutD  = get$('m-coutd')?.value;
+  const coutT  = get$('m-coutt')?.value;
+  const cl     = get$('m-cl')?.value;
+  const bkfN   = get$('m-bkf')?.value;
+  const bkfS   = get$('m-bkfslot')?.value;
+  const guests = parseInt(get$('gc')?.textContent)||o.guests||1;
 
-  await update(ref(db,`objects/${objId}`),upd);
-  const merged={...o,...upd};
-  const newSt=ostatus(merged);
-  const changes=[];
-  if(newSt!==prevSt) changes.push(`${t('occupied')} → "${olabel(merged)}"`);
-  if(upd.checkinDate) changes.push(`${t('checkin_date')}: ${fd(upd.checkinDate)} ${upd.checkinTime||''}`);
+  const upd = { guests, lastChangedBy:me.name, lastChangedAt:Date.now() };
+  if(v){ upd.occupied=(v==='occ'||v==='co'); upd.checkout=(v==='co'); }
+  if(v==='emp'){ upd.checkinDate=null;upd.checkoutDate=null;upd.occupied=false;upd.checkout=false;upd.bkfNeeded=false; }
+  if(v==='ci'){ upd.checkinDate=todayStr();upd.occupied=false;upd.checkout=false; }
+  if(cinD&&v!=='emp') upd.checkinDate=cinD;
+  if(cinT) upd.checkinTime=cinT;
+  if(coutD&&v!=='emp') upd.checkoutDate=coutD;
+  if(coutT) upd.checkoutTime=coutT;
+  if(bkfN) upd.bkfNeeded=(bkfN==='yes');
+  if(bkfS) upd.defaultSlotId=bkfS;
+  if(cl){ upd.skipClean=(cl==='skip'); upd.cleanStatus=cl==='skip'?'dirty':cl; }
+
+  await update(ref(db,`objects/${objId}`), upd);
+
+  const merged = {...o,...upd};
+  const newSt = ostatus(merged);
+  const changes = [];
+  if(newSt!==prevSt) changes.push(`${olabel(merged)}`);
+  if(upd.checkinDate)  changes.push(`${t('checkin_date')}: ${fd(upd.checkinDate)} ${upd.checkinTime||''}`);
   if(upd.checkoutDate) changes.push(`${t('checkout_date')}: ${fd(upd.checkoutDate)} ${upd.checkoutTime||''}`);
   if(cl==='cleaned') changes.push(t('cleaned'));
 
-  if(changes.length){
-    const msg=`${o.name}: ${changes.join(' · ')}`;
-    await addLog(objId,msg,'#1a6e5a');
-    await sendNotifications(currentRole,msg);
+  if(changes.length) {
+    const msg = `${o.name}: ${changes.join(' · ')}`;
+    await addLog(objId, msg, '#1a6e5a');
+    await notify(me.role, msg);
   }
-  if(merged.checkout||(!merged.occupied&&prevSt==='occ')) await addToQueue(objId,'clean');
-  if(merged.occupied&&!merged.checkout&&merged.checkinDate&&merged.checkoutDate){
-    if(merged.bkfNeeded) await addToQueue(objId,'bkf');
-    const bkfUpd={};
-    let d=new Date(merged.checkinDate+'T12:00:00');
-    const end=new Date(merged.checkoutDate+'T12:00:00');
-    while(d<=end){
-      const dstr=ds(d);
-      const key=`${objId}_${dstr}`;
-      if(!bkfSchedule[key]) bkfUpd[key]={time:merged.bkfTime||'08:00',noBkf:false};
-      d=addD(dstr,1);
+  // Добавить в очередь
+  if(hasFeat(o.typeId,'cleaning')) {
+    if(merged.checkout||(!merged.occupied&&prevSt==='occ')) await addToQueue(objId,'clean');
+  }
+  if(hasFeat(o.typeId,'breakfast')&&merged.occupied&&!merged.checkout&&merged.bkfNeeded) {
+    await addToQueue(objId,'bkf');
+    // Создать расписание завтраков
+    if(merged.checkinDate&&merged.checkoutDate) {
+      const bkfUpd={};
+      let cur=merged.checkinDate;
+      while(cur<=merged.checkoutDate) {
+        const k=`${objId}_${cur}`;
+        if(!bkfSched[k]) bkfUpd[k]={ slotId:merged.defaultSlotId||null, noBkf:false, customTime:'08:00' };
+        cur=addDays(cur,1);
+      }
+      if(Object.keys(bkfUpd).length) await update(ref(db,'bkfSched'),bkfUpd);
     }
-    if(Object.keys(bkfUpd).length) await update(ref(db,'bkfSchedule'),bkfUpd);
   }
   closeModal();
 }
 window.saveObject=saveObject;
 
-async function addToQueue(objId,type){
+async function addToQueue(objId,type) {
   if(!Object.values(queue).find(q=>q.roomId===objId&&q.type===type&&!q.done))
     await push(ref(db,'queue'),{roomId:objId,type,assignedTo:[],done:false,createdAt:Date.now()});
 }
 
-async function toggleAssign(taskId,userId){
-  const task=queue[taskId]; if(!task) return;
+async function toggleAssign(taskId,userId) {
+  const task=queue[taskId]; if(!task)return;
   const a=[...(task.assignedTo||[])];
   const idx=a.indexOf(userId);
-  if(idx>=0)a.splice(idx,1); else a.push(userId);
+  if(idx>=0) a.splice(idx,1); else a.push(userId);
   await update(ref(db,`queue/${taskId}`),{assignedTo:a});
 }
 window.toggleAssign=toggleAssign;
 
-async function confirmAssign(taskId){
-  const task=queue[taskId]; if(!task||!(task.assignedTo||[]).length) return;
+async function confirmAssign(taskId) {
+  const task=queue[taskId]; if(!task||(task.assignedTo||[]).length===0)return;
   const o=objects[task.roomId];
   const names=(task.assignedTo||[]).map(uid=>{const u=Object.values(users).find(u=>u.id===uid);return u?.name||'';}).filter(Boolean);
   const tl=task.type==='clean'?t('cleaning'):t('bkf');
-  const msg=`${o?.name||task.roomId}: ${t('assign')} → ${names.join(' + ')} (${tl})`;
+  const msg=`${o?.name}: ${t('assign')} → ${names.join(' + ')} (${tl})`;
   await addLog(task.roomId,msg,'#6a4ecf');
+  // Уведомить каждого уборщика
   for(let i=0;i<task.assignedTo.length;i++){
     const uid=task.assignedTo[i];
     const u=Object.values(users).find(u=>u.id===uid);
     if(u?.phone&&WORKER_URL){
       const others=names.filter((_,j)=>j!==i);
-      const m=`👔 ${currentUserName}: ${o?.name}: ${tl}${others.length?' · '+t('together_with')+' '+others.join(', '):''}${o?.checkoutDate?' · '+fd(o.checkoutDate)+' '+o.checkoutTime:''}`;
+      const m=`👔 ${me.name}: ${o?.name}: ${tl}${others.length?' · '+t('together')+' '+others.join(', '):''}${o?.checkoutDate?' · '+fd(o.checkoutDate)+' '+(o.checkoutTime||''):''}`;
       try{ await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phones:[u.phone],message:m})}); }catch(e){}
     }
   }
-  await sendNotifications('senior',msg);
+  await notify('senior',msg);
   showToast(t('saved'));
 }
 window.confirmAssign=confirmAssign;
 
-async function markDone(taskId,cleanerId){
-  const task=queue[taskId]; if(!task) return;
+async function markDone(taskId,cleanerId) {
+  const task=queue[taskId]; if(!task)return;
   const o=objects[task.roomId];
   const u=Object.values(users).find(u=>u.id===cleanerId);
   await update(ref(db,`queue/${taskId}`),{done:true,doneBy:cleanerId,doneAt:Date.now()});
   if(task.type==='clean') await update(ref(db,`objects/${task.roomId}`),{cleanStatus:'cleaned',lastChangedBy:u?.name,lastChangedAt:Date.now()});
   const lbl=task.type==='clean'?t('cleaning'):t('bkf');
-  const msg=`${o?.name||task.roomId}: ✓ ${lbl} (${u?.name||''})`;
+  const msg=`${o?.name}: ✓ ${lbl} (${u?.name||''})`;
   await addLog(task.roomId,msg,'#2a7acf');
-  await sendNotifications('cleaner',msg);
+  await notify('cleaner',msg);
   renderAll();
 }
 window.markDone=markDone;
 
-async function markIssue(taskId,cleanerId){
-  const task=queue[taskId]; if(!task) return;
+async function markIssue(taskId,cleanerId) {
+  const task=queue[taskId]; if(!task)return;
   const o=objects[task.roomId];
   const u=Object.values(users).find(u=>u.id===cleanerId);
-  const msg=`${o?.name||task.roomId}: ⚠ ${t('problem')} (${u?.name||''})`;
+  const msg=`${o?.name}: ⚠ ${t('problem')} (${u?.name||''})`;
   await addLog(task.roomId,msg,'#e24b4a');
-  await sendNotifications('cleaner',msg);
+  await notify('cleaner',msg);
 }
 window.markIssue=markIssue;
 
-async function saveBkfDay(objId,dateS){
-  const el=document.getElementById(`bt-${objId}-${dateS}`); if(!el) return;
+// ── Завтраки ──────────────────────────────────
+async function saveBkfDay(objId,dateS) {
+  const slotEl=document.getElementById(`bs-${objId}-${dateS}`);
+  const timeEl=document.getElementById(`bt-${objId}-${dateS}`);
   const cur=getBkf(objId,dateS);
-  await update(ref(db,`bkfSchedule/${objId}_${dateS}`),{time:el.value,noBkf:cur.noBkf||false});
+  const upd={ slotId:slotEl?.value||null, customTime:timeEl?.value||cur.customTime||'08:00', noBkf:cur.noBkf||false };
+  await update(ref(db,`bkfSched/${objId}_${dateS}`),upd);
   const o=objects[objId];
-  const msg=`${o?.name}: ${t('breakfast_time')} ${fd(dateS)} → ${el.value}`;
+  const msg=`${o?.name}: ${t('bkf_time')} ${fd(dateS)} → ${upd.customTime}`;
   await addLog(objId,msg,'#b85c00');
-  await sendNotifications(currentRole,msg);
+  await notify(me.role,msg);
   const ok=document.getElementById(`ok-${objId}-${dateS}`);
   if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);}
 }
 window.saveBkfDay=saveBkfDay;
 
-async function toggleNoBkf(objId,dateS){
+async function toggleNoBkf(objId,dateS) {
   const cur=getBkf(objId,dateS);
-  await update(ref(db,`bkfSchedule/${objId}_${dateS}`),{time:cur.time,noBkf:!cur.noBkf});
+  await update(ref(db,`bkfSched/${objId}_${dateS}`),{noBkf:!cur.noBkf});
   const o=objects[objId];
-  const msg=`${o?.name}: ${t('breakfast_today')} ${fd(dateS)} — ${!cur.noBkf?t('skip'):t('restored')}`;
+  const msg=`${o?.name}: ${t('bkf')} ${fd(dateS)} — ${!cur.noBkf?t('skip'):t('restored')}`;
   await addLog(objId,msg,'#b85c00');
-  await sendNotifications(currentRole,msg);
+  await notify(me.role,msg);
 }
 window.toggleNoBkf=toggleNoBkf;
 
-// ── Управление объектами (Админ) ──────────────
-async function addObject(){
-  const nameEl=document.getElementById('new-obj-name');
-  const typeEl=document.getElementById('new-obj-type');
-  const floorEl=document.getElementById('new-obj-floor');
-  if(!nameEl?.value){ showToast(t('fill_required')); return; }
-  const newRef=push(ref(db,'objects'));
-  await set(newRef,{
-    id:newRef.key, name:nameEl.value, type:typeEl?.value||'room',
+// ── Типы объектов ─────────────────────────────
+async function saveObjType() {
+  const nameEl=document.getElementById('nt-name');
+  if(!nameEl?.value){showToast(t('fill_req'));return;}
+  const feats={
+    cleaning:  !!document.getElementById('nt-clean')?.checked,
+    occupied:  !!document.getElementById('nt-occ')?.checked,
+    guests:    !!document.getElementById('nt-guests')?.checked,
+    breakfast: !!document.getElementById('nt-bkf')?.checked,
+  };
+  const nr=push(ref(db,'objTypes'));
+  await set(nr,{id:nr.key,name:nameEl.value,features:feats});
+  nameEl.value='';
+  showToast(t('saved'));
+}
+window.saveObjType=saveObjType;
+
+async function updateObjType(typeId) {
+  const nameEl=document.getElementById(`tname-${typeId}`);
+  if(!nameEl)return;
+  const feats={
+    cleaning:  !!document.getElementById(`tf-clean-${typeId}`)?.checked,
+    occupied:  !!document.getElementById(`tf-occ-${typeId}`)?.checked,
+    guests:    !!document.getElementById(`tf-guests-${typeId}`)?.checked,
+    breakfast: !!document.getElementById(`tf-bkf-${typeId}`)?.checked,
+  };
+  await update(ref(db,`objTypes/${typeId}`),{name:nameEl.value,features:feats});
+  showToast(t('saved'));
+}
+window.updateObjType=updateObjType;
+
+async function deleteObjType(typeId) {
+  if(!confirm(t('confirm_del_type')))return;
+  await remove(ref(db,`objTypes/${typeId}`));
+}
+window.deleteObjType=deleteObjType;
+
+// ── Слоты завтраков ───────────────────────────
+async function saveBkfSlot() {
+  const nameEl=document.getElementById('bs-name');
+  const fromEl=document.getElementById('bs-from');
+  const toEl  =document.getElementById('bs-to');
+  if(!nameEl?.value||!fromEl?.value){showToast(t('fill_req'));return;}
+  const nr=push(ref(db,'bkfSlots'));
+  await set(nr,{id:nr.key,name:nameEl.value,from:fromEl.value,to:toEl?.value||fromEl.value});
+  nameEl.value='';fromEl.value='';if(toEl)toEl.value='';
+  showToast(t('saved'));
+}
+window.saveBkfSlot=saveBkfSlot;
+
+async function deleteBkfSlot(slotId) {
+  if(!confirm(t('confirm_del')))return;
+  await remove(ref(db,`bkfSlots/${slotId}`));
+}
+window.deleteBkfSlot=deleteBkfSlot;
+
+// ── Объекты ───────────────────────────────────
+async function addObject() {
+  const nameEl =document.getElementById('no-name');
+  const typeEl =document.getElementById('no-type');
+  const floorEl=document.getElementById('no-floor');
+  if(!nameEl?.value){showToast(t('fill_req'));return;}
+  const nr=push(ref(db,'objects'));
+  await set(nr,{
+    id:nr.key, name:nameEl.value, typeId:typeEl?.value||'',
     floor:floorEl?.value||'', occupied:false, checkout:false, guests:0,
     checkinDate:null,checkinTime:'14:00',checkoutDate:null,checkoutTime:'11:00',
     cleanStatus:'dirty',skipClean:false,bkfNeeded:true,
@@ -390,78 +473,81 @@ async function addObject(){
 }
 window.addObject=addObject;
 
-async function saveObjSettings(objId){
-  const nameEl=document.getElementById(`sname-${objId}`);
-  const typeEl=document.getElementById(`stype-${objId}`);
-  const floorEl=document.getElementById(`sfloor-${objId}`);
-  if(!nameEl) return;
-  await update(ref(db,`objects/${objId}`),{
-    name:nameEl.value,
-    type:typeEl?.value,
-    floor:floorEl?.value||''
-  });
-  await addLog(objId,`${nameEl.value}: настройки обновлены`,'#4a2a8a');
+async function saveObjSettings(objId) {
+  const n=document.getElementById(`sn-${objId}`)?.value;
+  const tp=document.getElementById(`st-${objId}`)?.value;
+  const fl=document.getElementById(`sf-${objId}`)?.value;
+  if(!n)return;
+  await update(ref(db,`objects/${objId}`),{name:n,typeId:tp||'',floor:fl||''});
+  await addLog(objId,`${n}: настройки обновлены`,'#4a2a8a');
   showToast(t('saved'));
 }
 window.saveObjSettings=saveObjSettings;
 
-async function deleteObject(objId){
-  if(!confirm(t('confirm_delete'))) return;
+async function deleteObject(objId) {
+  if(!confirm(t('confirm_del')))return;
   await remove(ref(db,`objects/${objId}`));
-  showToast(t('saved'));
 }
 window.deleteObject=deleteObject;
 
-async function adminSaveUser(userId){
-  const n=document.getElementById(`uname-${userId}`)?.value;
-  const p=document.getElementById(`uphone-${userId}`)?.value;
-  const r=document.getElementById(`urole-${userId}`)?.value;
-  if(!n) return;
+// ── Пользователи ──────────────────────────────
+async function adminSaveUser(userId) {
+  const n=document.getElementById(`un-${userId}`)?.value;
+  const p=document.getElementById(`up-${userId}`)?.value;
+  const r=document.getElementById(`ur-${userId}`)?.value;
+  if(!n)return;
   await update(ref(db,`users/${userId}`),{name:n,phone:p||'',role:r});
   showToast(t('saved'));
 }
 window.adminSaveUser=adminSaveUser;
 
-async function adminToggleUser(userId,active){
+async function adminToggleUser(userId,active) {
   await update(ref(db,`users/${userId}`),{active});
   showToast(active?t('enable'):t('disable'));
 }
 window.adminToggleUser=adminToggleUser;
 
-async function adminAddUser(){
-  const n=document.getElementById('new-uname')?.value;
-  const p=document.getElementById('new-uphone')?.value;
-  const e=document.getElementById('new-uemail')?.value;
-  const pw=document.getElementById('new-upass')?.value;
-  const r=document.getElementById('new-urole')?.value||'cleaner';
-  if(!n||!e||!pw){ showToast(t('fill_required')); return; }
-  const newRef=push(ref(db,'users'));
-  await set(newRef,{id:newRef.key,name:n,phone:p||'',email:e,role:r,active:true,createdAt:Date.now()});
-  ['new-uname','new-uphone','new-uemail','new-upass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+async function adminAddUser() {
+  const n=document.getElementById('au-name')?.value;
+  const p=document.getElementById('au-phone')?.value;
+  const e=document.getElementById('au-email')?.value;
+  const pw=document.getElementById('au-pass')?.value;
+  const r=document.getElementById('au-role')?.value||'cleaner';
+  if(!n||!e||!pw){showToast(t('fill_req'));return;}
+  const nr=push(ref(db,'users'));
+  await set(nr,{id:nr.key,name:n,phone:p||'',email:e,role:r,active:true,createdAt:Date.now()});
+  ['au-name','au-phone','au-email','au-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   showToast(t('user_added'));
 }
 window.adminAddUser=adminAddUser;
 
 // ── Модальное окно ────────────────────────────
-function openModal(objId){
-  const o=objects[objId]; if(!o) return;
-  document.getElementById('mtitle').textContent=`${o.name} — ${olabel(o)}`;
+function openModal(objId) {
+  const o=objects[objId]; if(!o)return;
+  const tp=getType(o.typeId);
+  const showOcc     = hasFeat(o.typeId,'occupied');
+  const showGuests  = hasFeat(o.typeId,'guests');
+  const showBkf     = hasFeat(o.typeId,'breakfast');
+  const showClean   = hasFeat(o.typeId,'cleaning');
+
+  document.getElementById('mtitle').textContent=`${o.name} — ${typeName(o.typeId)}`;
   const rLogs=changelog.filter(l=>l.roomId===objId).slice(0,4);
   const miniLog=rLogs.length
-    ?rLogs.map(l=>`<div class="mlog-item"><span><b>${l.by}</b> — ${l.action.replace(new RegExp(o.name+':? ?'),'')}</span><span>${fdt(l.ts,lang)}</span></div>`).join('')
-    :`<div class="mlog-empty">${t('no_changes')}</div>`;
-  const st=ostatus(o);
+    ?rLogs.map(l=>`<div class="mli"><span><b>${l.by}</b> — ${l.action.replace(new RegExp(o.name+':? ?'),'')}</span><span>${fdt(l.ts,lang)}</span></div>`).join('')
+    :`<div class="mli muted">${t('no_changes')}</div>`;
+
+  const slotsOpts=Object.values(bkfSlots).map(s=>`<option value="${s.id}" ${o.defaultSlotId===s.id?'selected':''}>${s.name} (${s.from}–${s.to})</option>`).join('');
+
   document.getElementById('mcontent').innerHTML=`
-    <div class="mrow"><label>${t('occupied')}</label>
+    ${showOcc?`<div class="mrow"><label>${t('occupied')}</label>
       <select id="m-st" onchange="mStCh()">
-        <option value="occ" ${o.occupied&&!o.checkout?'selected':''}>  ${t('occupied')}</option>
+        <option value="occ" ${o.occupied&&!o.checkout?'selected':''}>${t('occupied')}</option>
         <option value="co"  ${o.checkout?'selected':''}>${t('checkout')}</option>
         <option value="ci"  ${o.checkinDate===todayStr()&&!o.occupied?'selected':''}>${t('checkin_today')}</option>
         <option value="emp" ${!o.occupied&&o.checkinDate!==todayStr()?'selected':''}>${t('vacant')}</option>
-      </select>
-    </div>
-    <div id="m-ob" style="${o.occupied||o.checkinDate===todayStr()?'':'display:none'}">
-      <div class="mrow"><label>${t('guests')}</label>
+      </select></div>`:''}
+    <div id="m-ob" style="${(showOcc&&(o.occupied||o.checkinDate===todayStr()))||!showOcc?'':'display:none'}">
+      ${showGuests?`<div class="mrow"><label>${t('guests')}</label>
         <div class="gr"><button onclick="mChg('${objId}',-1)">−</button><span id="gc">${o.guests||1}</span><button onclick="mChg('${objId}',1)">+</button></div>
       </div>
       <div class="mrow-2">
@@ -469,29 +555,29 @@ function openModal(objId){
         <div><label>${t('checkin_time')}</label><input type="time" id="m-cint" value="${o.checkinTime||'14:00'}"></div>
       </div>
       <div class="mrow-2">
-        <div><label>${t('checkout_date')}</label><input type="date" id="m-coutd" value="${o.checkoutDate||ds(addD(todayStr(),1))}"></div>
+        <div><label>${t('checkout_date')}</label><input type="date" id="m-coutd" value="${o.checkoutDate||addDays(todayStr(),1)}"></div>
         <div><label>${t('checkout_time')}</label><input type="time" id="m-coutt" value="${o.checkoutTime||'11:00'}"></div>
-      </div>
-      <div id="bkf-outer" style="${!o.checkout?'':'display:none'}">
-        <div class="mrow"><label>${t('breakfast_needed')}</label>
-          <select id="m-bkf" onchange="mBkfCh()">
-            <option value="yes" ${o.bkfNeeded!==false?'selected':''}>${t('breakfast_needed')}</option>
-            <option value="no"  ${o.bkfNeeded===false?'selected':''}>${t('breakfast_not_needed')}</option>
+      </div>`:''}
+      ${showBkf?`<div class="mrow"><label>${t('bkf_yes')}</label>
+        <select id="m-bkf" onchange="mBkfCh()">
+          <option value="yes" ${o.bkfNeeded!==false?'selected':''}>${t('bkf_yes')}</option>
+          <option value="no"  ${o.bkfNeeded===false?'selected':''}>${t('bkf_no')}</option>
+        </select></div>
+      <div id="m-bkfslot-row" style="${o.bkfNeeded!==false?'':'display:none'}">
+        <div class="mrow"><label>${t('bkf_time')}</label>
+          <select id="m-bkfslot">
+            <option value="">${t('bkf_time')}...</option>
+            ${slotsOpts}
           </select>
         </div>
-        <div class="mrow" id="bkf-time-row" style="${o.bkfNeeded!==false?'':'display:none'}">
-          <label>${t('breakfast_time')}</label>
-          <input type="time" id="m-bkft" value="${o.bkfTime||'08:00'}" min="07:00" max="11:00">
-        </div>
-      </div>
+      </div>`:''}
     </div>
-    <div class="mrow"><label>${t('cleaning_required')}</label>
+    ${showClean?`<div class="mrow"><label>${t('cleaning')}</label>
       <select id="m-cl">
-        <option value="dirty"   ${o.cleanStatus==='dirty'&&!o.skipClean?'selected':''}>${t('cleaning_required')}</option>
+        <option value="dirty"   ${o.cleanStatus==='dirty'&&!o.skipClean?'selected':''}>${t('need_clean')}</option>
         <option value="cleaned" ${o.cleanStatus==='cleaned'?'selected':''}>${t('cleaned')}</option>
-        <option value="skip"    ${o.skipClean?'selected':''}>${t('do_not_clean')}</option>
-      </select>
-    </div>
+        <option value="skip"    ${o.skipClean?'selected':''}>${t('no_clean')}</option>
+      </select></div>`:''}
     <div class="mact">
       <button class="btn-p" onclick="saveObject('${objId}')">${t('save')}</button>
       <button class="btn-s" onclick="closeModal()">${t('cancel')}</button>
@@ -503,26 +589,24 @@ function openModal(objId){
 }
 window.openModal=openModal;
 
-function mStCh(){
+function mStCh() {
   const v=document.getElementById('m-st')?.value;
   const ob=document.getElementById('m-ob');
-  const bo=document.getElementById('bkf-outer');
-  if(ob)ob.style.display=(v==='occ'||v==='ci'||v==='co')?'':'none';
-  if(bo)bo.style.display=v==='checkout'?'none':'';
+  if(ob) ob.style.display=(v==='occ'||v==='ci'||v==='co')?'':'none';
 }
 window.mStCh=mStCh;
 
-function mBkfCh(){
+function mBkfCh() {
   const v=document.getElementById('m-bkf')?.value;
-  const el=document.getElementById('bkf-time-row');
-  if(el)el.style.display=v==='yes'?'':'none';
+  const el=document.getElementById('m-bkfslot-row');
+  if(el) el.style.display=v==='yes'?'':'none';
 }
 window.mBkfCh=mBkfCh;
 
-function mChg(objId,d){
-  const o=objects[objId]; if(!o) return;
+function mChg(objId,d) {
+  const o=objects[objId]; if(!o)return;
   o.guests=Math.max(1,(o.guests||1)+d);
-  const el=document.getElementById('gc'); if(el)el.textContent=o.guests;
+  const el=document.getElementById('gc'); if(el) el.textContent=o.guests;
 }
 window.mChg=mChg;
 
@@ -530,10 +614,9 @@ function closeModal(){document.getElementById('mbg').classList.remove('open');}
 window.closeModal=closeModal;
 window.closeMaybe=e=>{if(e.target===document.getElementById('mbg'))closeModal();};
 
-// ── Рендер ────────────────────────────────────
-function updateStats(){
-  const oArr=Object.values(objects);
-  const qArr=Object.values(queue);
+// ── HTML секции ───────────────────────────────
+function updateStats() {
+  const oArr=Object.values(objects), qArr=Object.values(queue);
   document.getElementById('s-occ').textContent=oArr.filter(o=>o.occupied&&!o.checkout).length;
   document.getElementById('s-emp').textContent=oArr.filter(o=>!o.occupied).length;
   document.getElementById('s-need').textContent=qArr.filter(q=>!q.done).length;
@@ -544,67 +627,57 @@ function updateStats(){
   const keys=Object.keys(map).sort();
   el.innerHTML=keys.length
     ?keys.map(k=>`<div class="bslot">${k} — <b>${map[k].reduce((s,o)=>s+(o.guests||1),0)} ${t('portions')}</b></div>`).join('')
-    :`<div class="bslot muted">${t('no_log')}</div>`;
+    :`<div class="bslot muted">—</div>`;
 }
 
-function getMainTabs(){
-  if(currentRole==='hotel')   return [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}];
-  if(currentRole==='senior')  return [{k:'queue',l:t('tasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}];
-  if(currentRole==='admin')   return [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'users',l:t('users')},{k:'settings',l:t('settings')},{k:'log',l:t('log')}];
-  return [{k:'mytasks',l:t('mytasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')}];
-}
-
-function setMainTab(k){
-  mainTab=k; dayOffset=0;
-  document.querySelectorAll('.mt').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
-  renderContent();
-}
-window.setMainTab=setMainTab;
-
-function renderTabs(){
-  document.getElementById('main-tabs').innerHTML=getMainTabs()
+function renderTabs() {
+  const tabs =
+    me.role==='hotel'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}] :
+    me.role==='senior'  ? [{k:'queue',l:t('tasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}] :
+    me.role==='admin'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'users',l:t('users')},{k:'settings',l:t('settings')},{k:'log',l:t('log')}] :
+                          [{k:'mytasks',l:t('mytasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')}];
+  document.getElementById('main-tabs').innerHTML=tabs
     .map(tb=>`<button class="mt${mainTab===tb.k?' active':''}" data-k="${tb.k}" onclick="setMainTab('${tb.k}')">${tb.l}</button>`).join('');
 }
+function setMainTab(k){mainTab=k;dayOffset=0;document.querySelectorAll('.mt').forEach(b=>b.classList.toggle('active',b.dataset.k===k));renderContent();}
+window.setMainTab=setMainTab;
 
-// Сортировка: выезд → въезд сегодня → занят → свободен
-function sortedObjects(){
-  return Object.values(objects).sort((a,b)=>{
-    const p=o=>{const s=ostatus(o);if(s==='co')return 0;if(s==='ci')return 1;if(s==='occ')return 2;return 3;};
-    return p(a)-p(b);
-  });
-}
-
-function roomsGridHTML(clickable){
+function roomsGridHTML(clickable) {
   const objs=sortedObjects();
-  if(!objs.length) return `<div class="empty-state">${t('no_objects')}</div>`;
+  if(!objs.length) return `<div class="empty-state">${t('no_objs')}</div>`;
   return objs.map(o=>{
     const st=ostatus(o);
     const last=changelog.find(l=>l.roomId===o.id);
-    const assignedQ=Object.values(queue).find(q=>q.roomId===o.id&&!q.done&&(q.assignedTo||[]).length>0);
-    const assignedNames=assignedQ?(assignedQ.assignedTo||[]).map(uid=>{const u=Object.values(users).find(u=>u.id===uid);return u?.name||'';}).filter(Boolean).join(', '):null;
-    const myTask=currentRole==='cleaner'?Object.values(queue).find(q=>q.roomId===o.id&&(q.assignedTo||[]).includes(currentUserId)&&!q.done):null;
+    const aQ=Object.values(queue).find(q=>q.roomId===o.id&&!q.done&&(q.assignedTo||[]).length>0);
+    const aNames=aQ?(aQ.assignedTo||[]).map(uid=>{const u=Object.values(users).find(u=>u.id===uid);return u?.name||'';}).filter(Boolean).join(', '):null;
+    const myT=me.role==='cleaner'?Object.values(queue).find(q=>q.roomId===o.id&&(q.assignedTo||[]).includes(me.id)&&!q.done):null;
     const pri=priLabel(o);
     const todBkf=o.occupied&&!o.checkout?getBkf(o.id,todayStr()):null;
-    return `<div class="rc ${st}${clickable?' clickable':''}" ${clickable?`onclick="openModal('${o.id}')"`:''}>
-      <div class="rc-num">${o.name}<span class="rc-type">${typeLabel(o.type)}</span></div>
+    const slot=todBkf?.slotId?bkfSlots[todBkf.slotId]:null;
+    const bkfLabel=slot?`${slot.from}`:todBkf?.customTime||'';
+    return`<div class="rc ${st}${clickable?' clickable':''}" ${clickable?`onclick="openModal('${o.id}')"`:''}>
+      <div class="rc-num">${o.name}<span class="rc-type">${typeName(o.typeId)}</span></div>
       <div class="rc-st ${st}">${olabel(o)}</div>
-      ${o.guests>0?`<div class="rc-ln">${o.guests} ${t('guests').toLowerCase()}</div>`:''}
+      ${o.guests>0&&hasFeat(o.typeId,'guests')?`<div class="rc-ln">${o.guests} ${t('guests').toLowerCase()}</div>`:''}
       ${o.checkinDate&&o.occupied?`<div class="rc-ln green">↓ ${fd(o.checkinDate)} ${o.checkinTime||''}</div>`:''}
       ${o.checkoutDate&&o.occupied?`<div class="rc-ln${o.checkout?' alert':''}">↑ ${fd(o.checkoutDate)} ${o.checkoutTime||''}</div>`:''}
-      ${todBkf&&!todBkf.noBkf?`<div class="rc-ln alert">☕ ${todBkf.time}</div>`:o.occupied&&!o.checkout?`<div class="rc-ln muted">☕ ${t('without_breakfast')}</div>`:''}
+      ${hasFeat(o.typeId,'breakfast')&&o.occupied&&!o.checkout?(todBkf&&!todBkf.noBkf?`<div class="rc-ln alert">☕ ${bkfLabel}</div>`:`<div class="rc-ln muted">☕ ${t('without_bkf')}</div>`):''}
       ${pri?`<div class="rc-ln alert sml">${pri}</div>`:''}
-      ${assignedNames?`<div class="rc-ln blue">→ ${assignedNames}</div>`:''}
-      ${myTask?`<div class="mytask-badge">${t('mytasks')}</div>`:''}
+      ${aNames?`<div class="rc-ln blue">→ ${aNames}</div>`:''}
+      ${myT?`<div class="my-badge">${t('mytasks')}</div>`:''}
       ${last?`<div class="rc-who">${last.by} · ${fdt(last.ts,lang)}</div>`:''}
       <div class="cb ${o.skipClean?'skip':o.cleanStatus}"></div>
     </div>`;
   }).join('');
 }
 
-function bkfTodayHTML(){
-  const viewDs=ds(addD(todayStr(),dayOffset));
-  const{total,map}=calcBkfDay(viewDs);
-  const dayLbl=dayOffset===0?t('today'):dayOffset===1?t('tomorrow'):dayOffset===-1?t('yesterday'):`${dayName(viewDs,lang)}, ${fd(viewDs)}`;
+function bkfTodayHTML() {
+  const viewDs=addDays(todayStr(),dayOffset-1);
+  // fix: addDays adds to today, but we need offset from today
+  const baseDate=new Date(); baseDate.setDate(baseDate.getDate()+dayOffset);
+  const viewDsFixed=ds(baseDate);
+  const{total,map}=calcBkfDay(viewDsFixed);
+  const dayLbl=dayOffset===0?t('today'):dayOffset===1?t('tomorrow'):dayOffset===-1?t('yesterday'):`${dayName(viewDsFixed,lang)}, ${fd(viewDsFixed)}`;
   const keys=Object.keys(map).sort();
   const groups=keys.map(k=>{
     const os=map[k]; const cnt=os.reduce((s,o)=>s+(o.guests||1),0);
@@ -615,148 +688,147 @@ function bkfTodayHTML(){
   }).join('')||`<div class="empty-state">${t('no_queue')}</div>`;
   return`<div class="day-nav">
     <button onclick="dayOffset--;renderContent()">‹</button>
-    <div><div class="day-lbl">${dayLbl}</div><div class="day-sub-lbl">${fd(viewDs)}</div></div>
+    <div><div class="day-lbl">${dayLbl}</div><div class="day-sub-l">${fd(viewDsFixed)}</div></div>
     <button onclick="dayOffset++;renderContent()">›</button>
   </div>
-  <div class="bkf-sum-card">
-    <div><div class="bkf-big-num">${total}</div><div class="bkf-sub-lbl">${t('breakfast_today')} · ${keys.length} slots</div></div>
-    <div class="bkf-right">${Object.values(map).reduce((s,a)=>s+a.length,0)} ${t('rooms').toLowerCase()}</div>
+  <div class="bkf-sum">
+    <div><div class="bkf-big">${total}</div><div class="bkf-sub">${t('breakfast')} · ${keys.length} слотов</div></div>
+    <div class="muted sml">${Object.values(map).reduce((s,a)=>s+a.length,0)} ${t('rooms').toLowerCase()}</div>
   </div>
   ${groups}`;
 }
 
-function bkfEditHTML(){
-  const canEdit=currentRole==='hotel'||currentRole==='admin';
-  const activeObjs=Object.values(objects).filter(o=>o.occupied&&o.checkinDate&&o.checkoutDate);
-  if(!activeObjs.length) return `<div class="empty-state">${t('no_objects')}</div>`;
+function bkfEditHTML() {
+  const canEdit=me.role==='hotel'||me.role==='admin';
+  const activeObjs=Object.values(objects).filter(o=>hasFeat(o.typeId,'breakfast')&&o.occupied&&o.checkinDate&&o.checkoutDate);
+  if(!activeObjs.length) return `<div class="empty-state">${t('no_objs')}</div>`;
+  const slotsOpts=Object.values(bkfSlots).map(s=>`<option value="${s.id}">${s.name} (${s.from}–${s.to})</option>`).join('');
   return activeObjs.map(o=>{
     const days=[];
-    let d=new Date(o.checkinDate+'T12:00:00');
-    const end=new Date(o.checkoutDate+'T12:00:00');
-    while(d<=end){days.push(ds(d));d=addD(ds(d),1);}
+    let cur=o.checkinDate;
+    while(cur<=o.checkoutDate){days.push(cur);cur=addDays(cur,1);}
     const daysHtml=days.map(dstr=>{
       const b=getBkf(o.id,dstr); const tod=dstr===todayStr();
+      const slot=b.slotId?bkfSlots[b.slotId]:null;
       return`<div class="rbk-day${tod?' tod':''}">
         <span class="rbk-date">${tod?'★ ':''}${dayName(dstr,lang)} ${fd(dstr)}</span>
-        ${b.noBkf?`<span class="bkf-skip-lbl">${t('skip')}</span>`
-          :canEdit?`<input class="ti" type="time" id="bt-${o.id}-${dstr}" value="${b.time}" min="07:00" max="11:00">`
-          :`<span class="bkf-time-lbl">${b.time}</span>`}
+        ${b.noBkf
+          ?`<span class="bskip">${t('skip')}</span>`
+          :canEdit
+            ?`<select id="bs-${o.id}-${dstr}" class="ti-sel"><option value="">${t('bkf_time')}...</option>${slotsOpts}</select>
+              <input class="ti" type="time" id="bt-${o.id}-${dstr}" value="${b.customTime||'08:00'}">`
+            :`<span class="btime">${slot?slot.from:b.customTime||''}</span>`
+        }
         ${canEdit?`<button class="nbtn${b.noBkf?' on':''}" onclick="toggleNoBkf('${o.id}','${dstr}')">${b.noBkf?t('restore_bkf'):t('skip_bkf')}</button>`:''}
         ${canEdit&&!b.noBkf?`<button class="sv-btn" onclick="saveBkfDay('${o.id}','${dstr}')">✓</button>`:''}
         <span class="ok-lbl" id="ok-${o.id}-${dstr}" style="display:none">✓</span>
       </div>`;
     }).join('');
     return`<div class="rbk">
-      <div class="rbk-top"><div class="rbk-room">${o.name} <span class="rbk-type">${typeLabel(o.type)}</span></div><div class="rbk-meta">${o.guests||1} ${t('guests').toLowerCase()} · ${fd(o.checkinDate)}–${fd(o.checkoutDate)}</div></div>
+      <div class="rbk-top"><div class="rbk-room">${o.name} <span class="rbk-type">${typeName(o.typeId)}</span></div><div class="rbk-meta">${o.guests||1} ${t('guests').toLowerCase()} · ${fd(o.checkinDate)}–${fd(o.checkoutDate)}</div></div>
       ${daysHtml}
     </div>`;
   }).join('');
 }
 
-function queueHTML(){
-  const unassigned=Object.entries(queue).filter(([,q])=>!q.done)
+function queueHTML() {
+  const items=Object.entries(queue).filter(([,q])=>!q.done)
     .sort(([,a],[,b])=>{
-      const p=id=>{const o=objects[id];const s=ostatus(o);if(s==='co')return 0;if(s==='ci')return 1;return 2;};
+      const p=id=>{const o=objects[id];const s=ostatus(o);return s==='co'?0:s==='ci'?1:2;};
       return p(a.roomId)-p(b.roomId);
     });
-  if(!unassigned.length) return `<div class="queue-panel"><div class="queue-title">${t('tasks')} <span class="qbadge">0</span></div><div class="empty-state">${t('no_queue')}</div></div>`;
-  const cleanerUsers=Object.values(users).filter(u=>u.role==='cleaner'&&u.active!==false);
-  const items=unassigned.map(([taskId,task])=>{
+  if(!items.length) return `<div class="queue-panel"><div class="queue-title">${t('tasks')} <span class="qbadge">0</span></div><div class="empty-state">${t('no_queue')}</div></div>`;
+  const cleaners=Object.values(users).filter(u=>u.role==='cleaner'&&u.active!==false);
+  const rows=items.map(([tid,task])=>{
     const o=objects[task.roomId];
     const tl=task.type==='clean'?t('cleaning'):t('bkf');
     const pri=o?priLabel(o):'';
-    const assignedNames=(task.assignedTo||[]).map(uid=>{const u=cleanerUsers.find(u=>u.id===uid);return u?.name||'';}).filter(Boolean);
-    const chips=cleanerUsers.map(u=>{
+    const aNames=(task.assignedTo||[]).map(uid=>{const u=cleaners.find(u=>u.id===uid);return u?.name||'';}).filter(Boolean);
+    const chips=cleaners.map(u=>{
       const sel=(task.assignedTo||[]).includes(u.id);
-      return`<div class="cl-chip${sel?' selected':''}" onclick="toggleAssign('${taskId}','${u.id}')"><span>${sel?'✓':''}</span>${u.name}</div>`;
+      return`<div class="cl-chip${sel?' selected':''}" onclick="toggleAssign('${tid}','${u.id}')"><span>${sel?'✓':''}</span>${u.name}</div>`;
     }).join('');
     return`<div class="qi">
       <div class="qi-top">
-        <div class="qi-room">${o?.name||task.roomId} <span class="qi-type-lbl">${typeLabel(o?.type)}</span></div>
+        <div class="qi-room">${o?.name||task.roomId} <span class="qi-tl">${typeName(o?.typeId)}</span></div>
         <div class="qi-type">${tl}${o?.checkoutDate?' · '+fd(o.checkoutDate)+' '+(o.checkoutTime||''):''}</div>
         ${pri?`<div class="qi-pri">${pri}</div>`:''}
-        ${assignedNames.length?`<div class="qi-asgnd">→ ${assignedNames.join(' + ')}</div>`:''}
+        ${aNames.length?`<div class="qi-asgnd">→ ${aNames.join(' + ')}</div>`:''}
       </div>
-      <div class="cleaners-multi">${chips||`<div class="muted sml">${t('select_cleaner')}</div>`}</div>
+      <div class="chips">${chips||`<div class="muted sml">${t('select_cleaner')}</div>`}</div>
       <div class="assign-bar">
-        <button class="abtn" onclick="confirmAssign('${taskId}')" ${(task.assignedTo||[]).length===0?'disabled':''}>
+        <button class="abtn" onclick="confirmAssign('${tid}')" ${(task.assignedTo||[]).length===0?'disabled':''}>
           ${(task.assignedTo||[]).length>0?`${t('assign')} (${task.assignedTo.length})`:t('select_cleaner')}
         </button>
       </div>
     </div>`;
   }).join('');
-  return`<div class="queue-panel"><div class="queue-title">${t('tasks')} <span class="qbadge">${unassigned.length}</span></div>${items}</div>`;
+  return`<div class="queue-panel"><div class="queue-title">${t('tasks')} <span class="qbadge">${items.length}</span></div>${rows}</div>`;
 }
 
-function myTasksHTML(){
-  const myTasks=Object.entries(queue).filter(([,q])=>(q.assignedTo||[]).includes(currentUserId)&&!q.done);
+function myTasksHTML() {
+  const myTasks=Object.entries(queue).filter(([,q])=>(q.assignedTo||[]).includes(me.id)&&!q.done);
   if(!myTasks.length) return `<div class="empty-state">${t('no_tasks')}</div>`;
-  return myTasks.map(([taskId,task])=>{
+  return myTasks.map(([tid,task])=>{
     const o=objects[task.roomId];
     const tc=task.type==='bkf'?'bkf':'clean';
     const tl=task.type==='clean'?t('cleaning'):t('bkf');
     const pri=o?priLabel(o):'';
-    const others=(task.assignedTo||[]).filter(id=>id!==currentUserId)
-      .map(uid=>{const u=Object.values(users).find(u=>u.id===uid);return u?.name||'';}).filter(Boolean);
+    const others=(task.assignedTo||[]).filter(id=>id!==me.id).map(uid=>{const u=Object.values(users).find(u=>u.id===uid);return u?.name||'';}).filter(Boolean);
     const todBkf=task.type==='bkf'&&o?getBkf(o.id,todayStr()):null;
+    const slot=todBkf?.slotId?bkfSlots[todBkf.slotId]:null;
+    const bkfTime=slot?`${slot.from}–${slot.to}`:todBkf?.customTime||'—';
     const detail=task.type==='clean'
       ?`${t('cleaning')}: ${o?.name}${o?.floor?' ('+o.floor+' '+t('floor')+'.)':''}`
-      :`${t('bkf')}: ${todBkf?.time||'—'} · ${o?.guests||1} ${t('portions')} → ${o?.name}`;
+      :`${t('bkf')}: ${bkfTime} · ${o?.guests||1} ${t('portions')} → ${o?.name}`;
     return`<div class="task-card">
       <div class="task-top"><div class="task-room">${o?.name||task.roomId}</div><span class="tbadge ${tc}">${tl}</span></div>
       ${pri?`<div class="task-pri">${pri}</div>`:''}
-      ${others.length?`<div class="task-together">${t('together_with')} ${others.join(', ')}</div>`:''}
-      <div class="task-detail">${detail}${o?.checkoutDate?`<br>↑ ${fd(o.checkoutDate)} ${o.checkoutTime||''}`:''}</div>
+      ${others.length?`<div class="task-tog">${t('together')} ${others.join(', ')}</div>`:''}
+      <div class="task-det">${detail}${o?.checkoutDate?`<br>↑ ${fd(o.checkoutDate)} ${o.checkoutTime||''}`:''}</div>
       <div class="tact">
-        <button class="done-btn" onclick="markDone('${taskId}','${currentUserId}')">${t('done')}</button>
-        <button class="issue-btn" onclick="markIssue('${taskId}','${currentUserId}')">${t('problem')}</button>
+        <button class="done-btn" onclick="markDone('${tid}','${me.id}')">${t('done')}</button>
+        <button class="issue-btn" onclick="markIssue('${tid}','${me.id}')">${t('problem')}</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function logHTML(){
-  const allBy=['all',...new Set(changelog.map(l=>l.by).filter(Boolean))];
+function logHTML() {
+  const byList=['all',...new Set(changelog.map(l=>l.by).filter(Boolean))];
   const filtered=logFilter==='all'?changelog:changelog.filter(l=>l.by===logFilter);
-  return`<div class="log-filters">
-    ${allBy.slice(0,8).map(u=>`<button class="lf${logFilter===u?' active':''}" onclick="logFilter='${u}';renderContent()">${u==='all'?t('all'):u}</button>`).join('')}
-  </div>
-  ${filtered.length
-    ?filtered.map(l=>`<div class="log-item"><div class="log-dot" style="background:${l.color}"></div><div><div class="log-action">${l.action}</div><div class="log-meta">${l.by} · ${fdt(l.ts,lang)}${l.roomId?' · '+l.roomId:''}</div></div></div>`).join('')
-    :`<div class="empty-state">${t('no_log')}</div>`}`;
+  return`<div class="log-filters">${byList.slice(0,8).map(u=>`<button class="lf${logFilter===u?' active':''}" onclick="logFilter='${u}';renderContent()">${u==='all'?t('all'):u}</button>`).join('')}</div>
+  ${filtered.length?filtered.map(l=>`<div class="log-item"><div class="log-dot" style="background:${l.color}"></div><div><div class="log-action">${l.action}</div><div class="log-meta">${l.by} · ${fdt(l.ts,lang)}${l.roomId?' · '+l.roomId:''}</div></div></div>`).join(''):`<div class="empty-state">${t('no_log')}</div>`}`;
 }
 
-function usersHTML(){
+function usersHTML() {
   const uList=Object.values(users);
-  const rows=uList.length?uList.map(u=>`
-    <div class="user-row${u.active===false?' inactive':''}">
-      <div class="user-av" style="background:${u.role==='hotel'?'#e6f1fb':u.role==='senior'?'#eeedfe':u.role==='cleaner'?'#e1f5ee':'#f5e6ff'};color:${u.role==='hotel'?'#185fa5':u.role==='senior'?'#534ab7':u.role==='cleaner'?'#0f6e56':'#4a2a8a'}">${(u.name||'?').slice(0,2).toUpperCase()}</div>
-      <div class="user-col">
-        <input type="text" id="uname-${u.id}" value="${u.name||''}" placeholder="${t('name')}" class="uin">
-        <input type="text" id="uphone-${u.id}" value="${u.phone||''}" placeholder="${t('phone')}" class="uin">
-        <select id="urole-${u.id}" class="usel">
-          <option value="hotel"   ${u.role==='hotel'?'selected':''}>${t('role_hotel')}</option>
-          <option value="senior"  ${u.role==='senior'?'selected':''}>${t('role_senior')}</option>
-          <option value="cleaner" ${u.role==='cleaner'?'selected':''}>${t('role_cleaner')}</option>
-        </select>
-      </div>
-      <div class="user-act">
-        <button class="adm-sv" onclick="adminSaveUser('${u.id}')">✓</button>
-        <button class="adm-toggle${u.active===false?' restore':''}" onclick="adminToggleUser('${u.id}',${u.active===false})">${u.active===false?t('enable'):t('disable')}</button>
-      </div>
-    </div>`).join(''):`<div class="empty-state">${t('no_log')}</div>`;
-  return`<div class="adm-panel">
-    <div class="adm-title">${t('users')}</div>
-    ${rows}
-  </div>
-  <div class="adm-panel">
-    <div class="adm-title">${t('add_user')}</div>
+  const avBg={hotel:'#e6f1fb',senior:'#eeedfe',cleaner:'#e1f5ee',admin:'#f5e6ff'};
+  const avCl={hotel:'#185fa5',senior:'#534ab7',cleaner:'#0f6e56',admin:'#4a2a8a'};
+  const rows=uList.length?uList.map(u=>`<div class="user-row${u.active===false?' inactive':''}">
+    <div class="user-av" style="background:${avBg[u.role]||'#eee'};color:${avCl[u.role]||'#333'}">${(u.name||'?').slice(0,2).toUpperCase()}</div>
+    <div class="user-col">
+      <input type="text"  id="un-${u.id}" value="${u.name||''}"  placeholder="${t('name')}"  class="uin">
+      <input type="text"  id="up-${u.id}" value="${u.phone||''}" placeholder="${t('phone')}" class="uin">
+      <select id="ur-${u.id}" class="usel">
+        <option value="hotel"   ${u.role==='hotel'?'selected':''}>${t('role_hotel')}</option>
+        <option value="senior"  ${u.role==='senior'?'selected':''}>${t('role_senior')}</option>
+        <option value="cleaner" ${u.role==='cleaner'?'selected':''}>${t('role_cleaner')}</option>
+      </select>
+    </div>
+    <div class="user-act">
+      <button class="adm-sv" onclick="adminSaveUser('${u.id}')">✓</button>
+      <button class="adm-tog${u.active===false?' r':''}" onclick="adminToggleUser('${u.id}',${u.active===false})">${u.active===false?t('enable'):t('disable')}</button>
+    </div>
+  </div>`).join(''):`<div class="empty-state">${t('no_log')}</div>`;
+  return`<div class="adm-panel"><div class="adm-title">${t('users')}</div>${rows}</div>
+  <div class="adm-panel"><div class="adm-title">${t('add_user')}</div>
     <div class="new-form">
-      <input type="text"     id="new-uname"  placeholder="${t('name')}"     class="uin">
-      <input type="text"     id="new-uphone" placeholder="${t('phone')}"    class="uin">
-      <input type="email"    id="new-uemail" placeholder="${t('email')}"    class="uin">
-      <input type="password" id="new-upass"  placeholder="${t('password')}" class="uin">
-      <select id="new-urole" class="usel">
+      <input type="text"     id="au-name"  placeholder="${t('name')}"     class="uin">
+      <input type="text"     id="au-phone" placeholder="${t('phone')}"    class="uin">
+      <input type="email"    id="au-email" placeholder="${t('email')}"    class="uin">
+      <input type="password" id="au-pass"  placeholder="${t('password')}" class="uin">
+      <select id="au-role" class="usel">
         <option value="cleaner">${t('role_cleaner')}</option>
         <option value="senior">${t('role_senior')}</option>
         <option value="hotel">${t('role_hotel')}</option>
@@ -766,50 +838,89 @@ function usersHTML(){
   </div>`;
 }
 
-function settingsHTML(){
-  const objs=sortedObjects();
-  const rows=objs.map(o=>`
-    <div class="adm-row">
-      <input type="text"  id="sname-${o.id}"  value="${o.name}"       placeholder="${t('object_name')}" style="max-width:70px;">
-      <select             id="stype-${o.id}"  class="usel" style="max-width:100px;">
-        <option value="room"         ${o.type==='room'?'selected':''}>${t('type_room')}</option>
-        <option value="hostel_room"  ${o.type==='hostel_room'?'selected':''}>${t('type_hostel_room')}</option>
-        <option value="hostel_bed"   ${o.type==='hostel_bed'?'selected':''}>${t('type_hostel_bed')}</option>
-        <option value="apartment"    ${o.type==='apartment'?'selected':''}>${t('type_apartment')}</option>
-        <option value="restaurant"   ${o.type==='restaurant'?'selected':''}>${t('type_restaurant')}</option>
-      </select>
-      <input type="text"  id="sfloor-${o.id}" value="${o.floor||''}"  placeholder="${t('floor')}" style="max-width:40px;">
-      <button class="adm-sv"    onclick="saveObjSettings('${o.id}')">✓</button>
-      <button class="adm-del"   onclick="deleteObject('${o.id}')">✕</button>
-    </div>`).join('');
-  return`<div class="adm-panel">
-    <div class="adm-title">${t('settings')} — ${t('rooms')}</div>
-    <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">${t('object_name')} · ${t('object_type')} · ${t('floor')}</div>
-    <div style="max-height:260px;overflow-y:auto;">${rows||`<div class="empty-state">${t('no_objects')}</div>`}</div>
-  </div>
+function settingsHTML() {
+  const typeList=Object.values(objTypes);
+  const slotList=Object.values(bkfSlots);
+  const objList=sortedObjects();
+
+  // Типы объектов
+  const typeRows=typeList.map(tp=>`<div class="adm-row">
+    <input type="text" id="tname-${tp.id}" value="${tp.name}" class="uin" style="max-width:110px;">
+    <div class="feat-checks">
+      <label><input type="checkbox" id="tf-clean-${tp.id}"  ${tp.features?.cleaning ?'checked':''}> ${t('feat_clean')}</label>
+      <label><input type="checkbox" id="tf-occ-${tp.id}"    ${tp.features?.occupied ?'checked':''}> ${t('feat_occupied')}</label>
+      <label><input type="checkbox" id="tf-guests-${tp.id}" ${tp.features?.guests   ?'checked':''}> ${t('feat_guests')}</label>
+      <label><input type="checkbox" id="tf-bkf-${tp.id}"    ${tp.features?.breakfast?'checked':''}> ${t('feat_breakfast')}</label>
+    </div>
+    <button class="adm-sv" onclick="updateObjType('${tp.id}')">✓</button>
+    <button class="adm-del" onclick="deleteObjType('${tp.id}')">✕</button>
+  </div>`).join('')||`<div class="empty-state sml">${t('no_types')}</div>`;
+
+  // Слоты завтраков
+  const slotRows=slotList.map(s=>`<div class="adm-row">
+    <span style="flex:1;font-size:12px;">${s.name}</span>
+    <span class="muted sml">${s.from}–${s.to}</span>
+    <button class="adm-del" onclick="deleteBkfSlot('${s.id}')">✕</button>
+  </div>`).join('')||`<div class="empty-state sml">${t('no_log')}</div>`;
+
+  // Объекты
+  const typeOpts=typeList.map(tp=>`<option value="${tp.id}">${tp.name}</option>`).join('');
+  const objRows=objList.map(o=>`<div class="adm-row">
+    <input type="text" id="sn-${o.id}" value="${o.name}" class="uin" style="max-width:70px;">
+    <select id="st-${o.id}" class="usel" style="max-width:110px;">${typeOpts?`<option value="">—</option>${typeList.map(tp=>`<option value="${tp.id}" ${o.typeId===tp.id?'selected':''}>${tp.name}</option>`).join('')}`:'<option>—</option>'}</select>
+    <input type="text" id="sf-${o.id}" value="${o.floor||''}" placeholder="${t('floor')}" class="uin" style="max-width:40px;">
+    <button class="adm-sv" onclick="saveObjSettings('${o.id}')">✓</button>
+    <button class="adm-del" onclick="deleteObject('${o.id}')">✕</button>
+  </div>`).join('')||`<div class="empty-state sml">${t('no_objs')}</div>`;
+
+  return`
   <div class="adm-panel">
-    <div class="adm-title">${t('add_object')}</div>
-    <div class="new-form">
-      <input type="text" id="new-obj-name"  placeholder="${t('object_name')}" class="uin">
-      <select id="new-obj-type" class="usel">
-        <option value="room">${t('type_room')}</option>
-        <option value="hostel_room">${t('type_hostel_room')}</option>
-        <option value="hostel_bed">${t('type_hostel_bed')}</option>
-        <option value="apartment">${t('type_apartment')}</option>
-        <option value="restaurant">${t('type_restaurant')}</option>
-      </select>
-      <input type="text" id="new-obj-floor" placeholder="${t('floor')}" class="uin" style="max-width:80px;">
-      <button class="adm-sv" onclick="addObject()">${t('add_object')}</button>
+    <div class="adm-title">${t('obj_types')}</div>
+    <div style="max-height:200px;overflow-y:auto;">${typeRows}</div>
+    <div class="new-form" style="margin-top:10px;">
+      <input type="text" id="nt-name" placeholder="${t('type_name')}" class="uin">
+      <div class="feat-checks">
+        <label><input type="checkbox" id="nt-clean"  checked> ${t('feat_clean')}</label>
+        <label><input type="checkbox" id="nt-occ"    checked> ${t('feat_occupied')}</label>
+        <label><input type="checkbox" id="nt-guests" checked> ${t('feat_guests')}</label>
+        <label><input type="checkbox" id="nt-bkf"    checked> ${t('feat_breakfast')}</label>
+      </div>
+      <button class="adm-sv" onclick="saveObjType()">${t('add_type')}</button>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-title">${t('bkf_slots')}</div>
+    <div>${slotRows}</div>
+    <div class="new-form" style="margin-top:10px;">
+      <input type="text" id="bs-name" placeholder="${t('slot_name')}" class="uin">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div><label class="sml muted">${t('slot_from')}</label><input type="time" id="bs-from" value="08:00"></div>
+        <div><label class="sml muted">${t('slot_to')}</label><input type="time" id="bs-to"   value="10:00"></div>
+      </div>
+      <button class="adm-sv" onclick="saveBkfSlot()">${t('add_slot')}</button>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-title">${t('rooms')}</div>
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">${t('obj_name')} · ${t('obj_type')} · ${t('floor')}</div>
+    <div style="max-height:240px;overflow-y:auto;">${objRows}</div>
+    <div class="new-form" style="margin-top:10px;">
+      <input type="text" id="no-name"  placeholder="${t('obj_name')}" class="uin">
+      <select id="no-type" class="usel">${typeList.length?typeList.map(tp=>`<option value="${tp.id}">${tp.name}</option>`).join(''):`<option value="">— ${t('no_types')} —</option>`}</select>
+      <input type="text" id="no-floor" placeholder="${t('floor')}" class="uin" style="max-width:80px;">
+      <button class="adm-sv" onclick="addObject()">${t('add_obj')}</button>
     </div>
   </div>`;
 }
 
-function renderContent(){
-  const mc=document.getElementById('main-content'); if(!mc) return;
-  const canClick=currentRole==='hotel'||currentRole==='admin';
+function renderContent() {
+  const mc=document.getElementById('main-content'); if(!mc)return;
+  const canClick=me.role==='hotel'||me.role==='admin';
   let html='';
   if(mainTab==='rooms'){
-    html=`<div class="section-lbl">${t('rooms')}${canClick?' — '+t('save').toLowerCase():''}... </div>
+    html=`<div class="section-lbl">${t('rooms')}</div>
       <div class="rooms-grid">${roomsGridHTML(canClick)}</div>
       <div class="legend">
         <div class="li"><div class="ld" style="background:#1a6e5a"></div>${t('occupied')}</div>
@@ -818,12 +929,11 @@ function renderContent(){
         <div class="li"><div class="ld" style="background:var(--border)"></div>${t('vacant')}</div>
       </div>`;
   } else if(mainTab==='breakfast'){
-    const canEdit=currentRole==='hotel'||currentRole==='admin';
+    const canEdit=me.role==='hotel'||me.role==='admin';
     html=`<div class="sub-tabs">
       <button class="st${subTab==='day'?' active':''}" onclick="subTab='day';renderContent()">${t('today')}</button>
       ${canEdit?`<button class="st${subTab==='edit'?' active':''}" onclick="subTab='edit';renderContent()">${t('edit_bkf')}</button>`:''}
-    </div>`;
-    html+=subTab==='edit'&&canEdit?bkfEditHTML():bkfTodayHTML();
+    </div>${subTab==='edit'&&canEdit?bkfEditHTML():bkfTodayHTML()}`;
   } else if(mainTab==='log'){
     html=`<div class="section-lbl">${t('log')}</div>${logHTML()}`;
   } else if(mainTab==='queue'){
@@ -838,144 +948,124 @@ function renderContent(){
   mc.innerHTML=html;
 }
 
-function renderAll(){
-  updateStats(); renderTabs(); renderContent();
-}
+function renderAll(){ updateStats(); renderTabs(); renderContent(); }
 
 // ── Авторизация ───────────────────────────────
 onAuthStateChanged(auth, async user=>{
   if(user){
-    currentUser=user;
     const snap=await get(ref(db,'users'));
-    const allUsers=snap.val()||{};
-    const found=Object.values(allUsers).find(u=>u.email===user.email);
+    const allU=snap.val()||{};
+    const found=Object.values(allU).find(u=>u.email===user.email);
     if(found){
-      if(found.active===false){ await signOut(auth); showLoginError(t('access_disabled')); return; }
-      currentRole=found.role||'cleaner';
-      currentUserId=found.id;
-      currentUserName=found.name;
+      if(found.active===false){ await signOut(auth); showLoginError(TR.ru.access_off); return; }
+      me={role:found.role||'cleaner',id:found.id,name:found.name};
     } else {
-      currentRole='admin'; currentUserId=user.uid; currentUserName=user.email;
+      me={role:'admin',id:user.uid,name:user.email};
       await set(ref(db,`users/${user.uid}`),{id:user.uid,name:user.email,email:user.email,phone:'',role:'admin',active:true,createdAt:Date.now()});
     }
-    // Язык по роли
-    lang = currentRole==='hotel' ? 'fi' : 'ru';
-    mainTab={hotel:'rooms',senior:'queue',admin:'rooms',cleaner:'mytasks'}[currentRole]||'rooms';
+    lang = me.role==='hotel' ? 'fi' : 'ru';
+    mainTab={hotel:'rooms',senior:'queue',admin:'rooms',cleaner:'mytasks'}[me.role]||'rooms';
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
-    document.getElementById('user-name').textContent=currentUserName;
-    document.getElementById('user-role').textContent=(T[lang]||T.ru)[`role_${currentRole}`]||currentRole;
+    document.getElementById('u-name').textContent=me.name;
+    document.getElementById('u-role').textContent=(TR[lang]||TR.ru)[`role_${me.role}`]||me.role;
+    document.getElementById('logout-btn').textContent=t('logout');
     startListeners();
   } else {
-    currentUser=null;
+    me={role:null,id:null,name:null};
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('app-screen').style.display='none';
   }
 });
 
 window.doLogin=async()=>{
-  const email=document.getElementById('l-email')?.value;
-  const pass=document.getElementById('l-pass')?.value;
-  if(!email||!pass){showLoginError('Email + пароль');return;}
-  try{ await signInWithEmailAndPassword(auth,email,pass); }
-  catch(e){ showLoginError(T.ru.wrong_password); }
+  const e=document.getElementById('l-email')?.value;
+  const p=document.getElementById('l-pass')?.value;
+  if(!e||!p){showLoginError('Email + пароль');return;}
+  try{ await signInWithEmailAndPassword(auth,e,p); }
+  catch(err){ showLoginError(TR.ru.wrong_pass); }
 };
-window.doLogout=async()=>{ await signOut(auth); };
+window.doLogout=async()=>signOut(auth);
 window.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.getElementById('login-screen')?.style.display!=='none') window.doLogin();
 });
-
-function showLoginError(msg){
-  const el=document.getElementById('login-error');
-  if(el){el.textContent=msg;el.style.display='block';}
-}
+function showLoginError(msg){ const el=document.getElementById('login-error'); if(el){el.textContent=msg;el.style.display='block';} }
 function showToast(msg){
-  const t=document.createElement('div');
-  t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.classList.add('show'),10);
-  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3000);
+  const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.classList.add('show'),10);
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 window.showToast=showToast;
 </script>
 
 <style>
 :root{
-  --green:#1a6e5a;--green-l:#e1f5ee;
-  --orange:#b85c00;--orange-l:#fff3e6;
-  --blue:#2a7acf;--blue-l:#e6f1fb;
-  --purple:#4a2a8a;--purple-l:#f0e8ff;
-  --red:#e24b4a;
-  --bg:#f7f6f3;--surface:#fff;
-  --border:rgba(0,0,0,.1);--border-s:rgba(0,0,0,.18);
-  --text:#1a1a18;--text-muted:#888780;
-  --r:10px;--rs:6px;
+  --green:#1a6e5a;--gl:#e1f5ee;--orange:#b85c00;--ol:#fff3e6;
+  --blue:#2a7acf;--bl:#e6f1fb;--purple:#4a2a8a;--red:#e24b4a;
+  --bg:#f7f6f3;--sur:#fff;--border:rgba(0,0,0,.1);--borders:rgba(0,0,0,.18);
+  --text:#1a1a18;--text-muted:#888780;--r:10px;--rs:6px;
 }
-@media(prefers-color-scheme:dark){
-  :root{--bg:#1a1a18;--surface:#242422;--border:rgba(255,255,255,.1);--border-s:rgba(255,255,255,.18);--text:#f0ede8;--green-l:#0d3328;--orange-l:#3a2000;--blue-l:#0d2340;--purple-l:#1e1030;}
-}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--sur:#242422;--border:rgba(255,255,255,.1);--borders:rgba(255,255,255,.18);--text:#f0ede8;--gl:#0d3328;--ol:#3a2000;--bl:#0d2340;}}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
-input,select,button{font-family:inherit;font-size:13px;}
-select,input[type=date],input[type=time],input[type=text],input[type=email],input[type=password],input[type=number]{
-  padding:6px 8px;border:0.5px solid var(--border-s);border-radius:var(--rs);
-  background:var(--bg);color:var(--text);width:100%;
+input,select,button,textarea{font-family:inherit;font-size:13px;}
+select,input[type=date],input[type=time],input[type=text],input[type=email],input[type=password]{
+  padding:6px 8px;border:0.5px solid var(--borders);border-radius:var(--rs);background:var(--bg);color:var(--text);width:100%;
 }
 button{cursor:pointer;}
+.muted{color:var(--text-muted)!important;} .sml{font-size:10px!important;}
 
 /* LOGIN */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem;}
-.login-card{background:var(--surface);border-radius:var(--r);border:0.5px solid var(--border);padding:2rem 1.5rem;width:100%;max-width:340px;}
-.login-logo{font-size:32px;text-align:center;margin-bottom:.25rem;}
-.login-title{font-size:18px;font-weight:500;text-align:center;margin-bottom:.25rem;}
-.login-sub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:1.5rem;}
-.login-card input{display:block;margin-bottom:.75rem;}
-.login-btn{display:block;width:100%;padding:11px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:500;}
-.login-btn:hover{background:#155a49;}
+.lcard{background:var(--sur);border-radius:var(--r);border:0.5px solid var(--border);padding:2rem 1.5rem;width:100%;max-width:340px;}
+.llogo{font-size:32px;text-align:center;margin-bottom:.25rem;}
+.ltitle{font-size:18px;font-weight:500;text-align:center;margin-bottom:.25rem;}
+.lsub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:1.5rem;}
+.lcard input{display:block;margin-bottom:.75rem;}
+.lbtn{display:block;width:100%;padding:11px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:500;}
+.lbtn:hover{background:#155a49;}
 #login-error{font-size:12px;color:var(--red);margin-top:.75rem;display:none;text-align:center;}
 
 /* APP */
 #app-screen{display:none;max-width:600px;margin:0 auto;padding:.75rem .75rem 5rem;}
 .appbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;}
-.appbar-left{display:flex;flex-direction:column;}
-.appbar-name{font-size:13px;font-weight:500;}
-.appbar-role{font-size:10px;color:var(--text-muted);}
+.abl{display:flex;flex-direction:column;}
+.abn{font-size:13px;font-weight:500;}
+.abr{font-size:10px;color:var(--text-muted);}
 .logout-btn{font-size:11px;padding:4px 10px;border-radius:var(--rs);border:0.5px solid var(--border);background:transparent;color:var(--text-muted);}
 
 /* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:.6rem;}
-.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rs);padding:7px 8px;text-align:center;}
+.stat{background:var(--sur);border:0.5px solid var(--border);border-radius:var(--rs);padding:7px 8px;text-align:center;}
 .stat-num{font-size:18px;font-weight:500;}
 .stat-lbl{font-size:9px;color:var(--text-muted);margin-top:1px;}
 .n-occ{color:var(--green);}.n-emp{color:var(--text-muted);}.n-need{color:var(--orange);}.n-done{color:var(--blue);}
 
 /* BKF BAR */
-.bkf-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:10px 13px;margin-bottom:.6rem;}
-.bkf-big{font-size:22px;font-weight:500;color:var(--orange);}
-.bkf-sub-lbl2{font-size:10px;color:var(--text-muted);}
+.bkf-bar{background:var(--sur);border:0.5px solid var(--border);border-radius:var(--r);padding:10px 13px;margin-bottom:.6rem;}
+.bkf-big2{font-size:22px;font-weight:500;color:var(--orange);}
+.bkf-lbl2{font-size:10px;color:var(--text-muted);}
 .bkf-times{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
 .bslot{font-size:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);padding:2px 7px;color:var(--text-muted);}
 .bslot b{color:var(--orange);font-weight:500;}
-.bslot.muted{color:var(--text-muted);}
 
 /* TABS */
 .main-tabs{display:flex;gap:4px;margin-bottom:.6rem;flex-wrap:wrap;}
-.mt{padding:5px 11px;border-radius:var(--rs);border:0.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:12px;transition:all .15s;}
+.mt{padding:5px 11px;border-radius:var(--rs);border:0.5px solid var(--border);background:var(--sur);color:var(--text-muted);font-size:12px;transition:all .15s;}
 .mt.active{background:var(--green);border-color:var(--green);color:#fff;}
 .mt:hover:not(.active){background:var(--bg);}
 .section-lbl{font-size:10px;color:var(--text-muted);font-weight:500;margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;}
 .sub-tabs{display:flex;gap:4px;margin-bottom:.6rem;}
-.st{padding:3px 9px;border-radius:20px;border:0.5px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:11px;}
-.st.active{background:var(--bg);border-color:var(--border-s);color:var(--text);}
+.st{padding:3px 9px;border-radius:20px;border:0.5px solid var(--border);background:var(--sur);color:var(--text-muted);font-size:11px;}
+.st.active{background:var(--bg);border-color:var(--borders);color:var(--text);}
 
-/* ROOMS GRID */
+/* ROOMS */
 .rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;}
-.rc{border:0.5px solid var(--border);border-radius:var(--r);padding:8px 9px;background:var(--surface);position:relative;transition:all .15s;font-size:11px;}
-.rc.clickable{cursor:pointer;}.rc.clickable:hover{border-color:var(--border-s);}
-.rc.occ{border-left:3px solid var(--green);}
-.rc.co {border-left:3px solid var(--orange);}
-.rc.ci {border-left:3px solid var(--blue);}
-.rc.emp{border-left:3px solid var(--border);}
+.rc{border:0.5px solid var(--border);border-radius:var(--r);padding:8px 9px;background:var(--sur);position:relative;transition:all .15s;font-size:11px;}
+.rc.clickable{cursor:pointer;}.rc.clickable:hover{border-color:var(--borders);}
+.rc.occ{border-left:3px solid var(--green);}.rc.co{border-left:3px solid var(--orange);}
+.rc.ci{border-left:3px solid var(--blue);}.rc.emp{border-left:3px solid var(--border);}
 .rc-num{font-size:13px;font-weight:500;margin-bottom:2px;}
 .rc-type{font-size:9px;color:var(--text-muted);font-weight:400;margin-left:3px;}
 .rc-st{font-size:10px;}
@@ -983,43 +1073,43 @@ button{cursor:pointer;}
 .rc-ln{font-size:10px;color:var(--text-muted);margin-top:1px;line-height:1.3;}
 .rc-ln.alert{color:var(--orange);}.rc-ln.blue{color:var(--blue);}.rc-ln.green{color:var(--green);}.rc-ln.muted{opacity:.5;}.rc-ln.sml{font-size:9px;}
 .rc-who{font-size:9px;color:var(--text-muted);margin-top:3px;border-top:0.5px solid var(--border);padding-top:2px;line-height:1.3;}
-.mytask-badge{font-size:9px;background:var(--blue-l);color:var(--blue);border-radius:3px;padding:1px 4px;margin-top:2px;display:inline-block;}
+.my-badge{font-size:9px;background:var(--bl);color:var(--blue);border-radius:3px;padding:1px 4px;margin-top:2px;display:inline-block;}
 .cb{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;}
-.cb.cleaned{background:var(--blue);}.cb.dirty{background:var(--red);}.cb.skip{background:var(--border-s);}
+.cb.cleaned{background:var(--blue);}.cb.dirty{background:var(--red);}.cb.skip{background:var(--borders);}
 .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px;}
 .li{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text-muted);}
 .ld{width:6px;height:6px;border-radius:50%;}
 
 /* QUEUE */
-.queue-panel{border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;background:var(--surface);margin-bottom:.6rem;}
+.queue-panel{border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;background:var(--sur);margin-bottom:.6rem;}
 .queue-title{font-size:12px;font-weight:500;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
 .qbadge{font-size:10px;background:var(--orange);color:#fff;padding:1px 7px;border-radius:20px;}
 .qi{padding:8px 0;border-bottom:0.5px solid var(--border);}
 .qi:last-child{border-bottom:none;}
 .qi-top{margin-bottom:5px;}
 .qi-room{font-size:12px;font-weight:500;}
-.qi-type-lbl{font-size:9px;color:var(--text-muted);}
+.qi-tl{font-size:9px;color:var(--text-muted);}
 .qi-type{font-size:10px;color:var(--text-muted);margin-top:1px;}
 .qi-pri{font-size:10px;color:var(--orange);margin-top:1px;}
 .qi-asgnd{font-size:10px;color:var(--blue);margin-top:1px;}
-.cleaners-multi{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
 .cl-chip{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg);font-size:11px;transition:all .15s;}
-.cl-chip:hover{border-color:var(--border-s);}
-.cl-chip.selected{background:var(--green-l);border-color:#5dcaa5;color:var(--green);}
+.cl-chip:hover{border-color:var(--borders);}
+.cl-chip.selected{background:var(--gl);border-color:#5dcaa5;color:var(--green);}
 .assign-bar{display:flex;gap:5px;margin-top:5px;}
 .abtn{font-size:11px;padding:4px 10px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;}
-.abtn:disabled{background:var(--border-s);cursor:default;}
+.abtn:disabled{background:var(--borders);cursor:default;}
 
 /* TASKS */
-.task-card{border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;background:var(--surface);}
+.task-card{border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;background:var(--sur);}
 .task-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
 .task-room{font-size:14px;font-weight:500;}
 .tbadge{font-size:9px;padding:2px 7px;border-radius:20px;}
-.tbadge.clean{background:var(--blue-l);color:var(--blue);border:0.5px solid #b5d0f0;}
-.tbadge.bkf{background:var(--orange-l);color:var(--orange);border:0.5px solid #f5c476;}
+.tbadge.clean{background:var(--bl);color:var(--blue);border:0.5px solid #b5d0f0;}
+.tbadge.bkf{background:var(--ol);color:var(--orange);border:0.5px solid #f5c476;}
 .task-pri{font-size:10px;color:var(--orange);margin-bottom:3px;}
-.task-together{font-size:10px;color:var(--blue);margin-bottom:3px;}
-.task-detail{font-size:11px;color:var(--text-muted);margin-bottom:7px;line-height:1.5;}
+.task-tog{font-size:10px;color:var(--blue);margin-bottom:3px;}
+.task-det{font-size:11px;color:var(--text-muted);margin-bottom:7px;line-height:1.5;}
 .tact{display:flex;gap:5px;}
 .done-btn{flex:1;padding:6px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:11px;}
 .issue-btn{padding:6px 9px;border-radius:var(--rs);border:0.5px solid var(--border);background:transparent;font-size:11px;color:var(--text);}
@@ -1028,19 +1118,18 @@ button{cursor:pointer;}
 .day-nav{display:flex;align-items:center;gap:8px;margin-bottom:.6rem;}
 .day-nav button{width:26px;height:26px;border:0.5px solid var(--border);border-radius:var(--rs);background:var(--bg);font-size:15px;color:var(--text);}
 .day-lbl{font-size:13px;font-weight:500;}
-.day-sub-lbl{font-size:10px;color:var(--text-muted);}
-.bkf-sum-card{background:var(--bg);border-radius:var(--r);padding:10px 13px;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;}
-.bkf-big-num{font-size:24px;font-weight:500;color:var(--orange);}
-.bkf-sub-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
-.bkf-right{font-size:10px;color:var(--text-muted);}
-.tg{border:0.5px solid var(--border);border-radius:var(--r);padding:9px 12px;margin-bottom:6px;background:var(--surface);}
+.day-sub-l{font-size:10px;color:var(--text-muted);}
+.bkf-sum{background:var(--bg);border-radius:var(--r);padding:10px 13px;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;}
+.bkf-big{font-size:24px;font-weight:500;color:var(--orange);}
+.bkf-sub{font-size:10px;color:var(--text-muted);margin-top:1px;}
+.tg{border:0.5px solid var(--border);border-radius:var(--r);padding:9px 12px;margin-bottom:6px;background:var(--sur);}
 .tg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
 .tg-time{font-size:12px;font-weight:500;color:var(--orange);}
 .tg-sub{font-size:10px;color:var(--text-muted);}
 .tg-cnt{font-size:18px;font-weight:500;}
 .tg-pills{display:flex;flex-wrap:wrap;gap:4px;}
 .rpill{font-size:10px;padding:2px 7px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg);color:var(--text-muted);}
-.rbk{border:0.5px solid var(--border);border-radius:var(--r);padding:9px 11px;margin-bottom:6px;background:var(--surface);}
+.rbk{border:0.5px solid var(--border);border-radius:var(--r);padding:9px 11px;margin-bottom:6px;background:var(--sur);}
 .rbk-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
 .rbk-room{font-size:12px;font-weight:500;}
 .rbk-type{font-size:10px;color:var(--text-muted);font-weight:400;margin-left:3px;}
@@ -1049,18 +1138,19 @@ button{cursor:pointer;}
 .rbk-day:last-child{border-bottom:none;}
 .rbk-date{min-width:80px;color:var(--text-muted);font-size:10px;}
 .rbk-day.tod .rbk-date{color:var(--orange);font-weight:500;}
-.ti{padding:3px 5px;border:0.5px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:11px;width:72px;}
+.ti{padding:3px 5px;border:0.5px solid var(--border);border-radius:var(--rs);background:var(--sur);color:var(--text);font-size:11px;width:72px;}
+.ti-sel{font-size:10px;padding:3px 5px;width:auto;max-width:120px;}
 .nbtn{font-size:10px;padding:2px 6px;border-radius:20px;border:0.5px solid var(--border);background:transparent;color:var(--text-muted);white-space:nowrap;}
-.nbtn.on{background:var(--orange-l);border-color:#f5c476;color:var(--orange);}
+.nbtn.on{background:var(--ol);border-color:#f5c476;color:var(--orange);}
 .sv-btn{font-size:10px;padding:2px 7px;border-radius:var(--rs);border:none;background:var(--orange);color:#fff;}
 .ok-lbl{font-size:10px;color:var(--green);}
-.bkf-skip-lbl{font-size:10px;color:var(--text-muted);font-style:italic;}
-.bkf-time-lbl{font-size:11px;font-weight:500;}
+.bskip{font-size:10px;color:var(--text-muted);font-style:italic;}
+.btime{font-size:11px;font-weight:500;}
 
 /* LOG */
 .log-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px;}
-.lf{padding:2px 8px;border-radius:20px;border:0.5px solid var(--border);font-size:10px;background:var(--surface);color:var(--text-muted);}
-.lf.active{background:var(--bg);border-color:var(--border-s);color:var(--text);}
+.lf{padding:2px 8px;border-radius:20px;border:0.5px solid var(--border);font-size:10px;background:var(--sur);color:var(--text-muted);}
+.lf.active{background:var(--bg);border-color:var(--borders);color:var(--text);}
 .log-item{display:flex;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);}
 .log-item:last-child{border-bottom:none;}
 .log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
@@ -1068,12 +1158,14 @@ button{cursor:pointer;}
 .log-meta{font-size:10px;color:var(--text-muted);margin-top:1px;}
 
 /* ADMIN */
-.adm-panel{border:0.5px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:.6rem;background:var(--surface);}
+.adm-panel{border:0.5px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:.6rem;background:var(--sur);}
 .adm-title{font-size:12px;font-weight:500;color:var(--purple);margin-bottom:9px;}
-.adm-row{display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:0.5px solid var(--border);}
+.adm-row{display:flex;align-items:center;gap:5px;padding:5px 0;border-bottom:0.5px solid var(--border);flex-wrap:wrap;}
 .adm-row:last-child{border-bottom:none;}
 .adm-sv{font-size:10px;padding:3px 8px;border-radius:var(--rs);border:none;background:var(--purple);color:#fff;flex-shrink:0;}
 .adm-del{font-size:10px;padding:3px 7px;border-radius:var(--rs);border:0.5px solid #f09595;background:transparent;color:#a32d2d;flex-shrink:0;}
+.feat-checks{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;}
+.feat-checks label{display:flex;align-items:center;gap:3px;cursor:pointer;}
 .user-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border);}
 .user-row:last-child{border-bottom:none;}
 .user-row.inactive{opacity:.5;}
@@ -1082,14 +1174,14 @@ button{cursor:pointer;}
 .user-act{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
 .uin{font-size:11px;}
 .usel{font-size:11px;}
-.adm-toggle{font-size:10px;padding:3px 8px;border-radius:var(--rs);border:0.5px solid #f09595;background:transparent;color:#a32d2d;white-space:nowrap;}
-.adm-toggle.restore{border-color:#5dcaa5;color:var(--green);}
+.adm-tog{font-size:10px;padding:3px 8px;border-radius:var(--rs);border:0.5px solid #f09595;background:transparent;color:#a32d2d;white-space:nowrap;}
+.adm-tog.r{border-color:#5dcaa5;color:var(--green);}
 .new-form{display:flex;flex-direction:column;gap:6px;}
 
 /* MODAL */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;}
 .modal-bg.open{display:flex;}
-.modal{background:var(--surface);border-radius:var(--r);border:0.5px solid var(--border);padding:1.1rem;width:305px;max-width:96vw;max-height:90vh;overflow-y:auto;}
+.modal{background:var(--sur);border-radius:var(--r);border:0.5px solid var(--border);padding:1.1rem;width:305px;max-width:96vw;max-height:90vh;overflow-y:auto;}
 .modal h3{font-size:14px;font-weight:500;margin-bottom:10px;}
 .mrow{margin-bottom:8px;}
 .mrow label{font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px;}
@@ -1102,15 +1194,12 @@ button{cursor:pointer;}
 .btn-s{padding:7px 12px;border-radius:var(--rs);border:0.5px solid var(--border);background:transparent;font-size:13px;color:var(--text);}
 .divider{border:none;border-top:0.5px solid var(--border);margin:9px 0;}
 .mlog-title{font-size:10px;font-weight:500;color:var(--text-muted);margin-bottom:4px;}
-.mlog-item{font-size:10px;color:var(--text-muted);padding:3px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;gap:8px;}
-.mlog-item:last-child{border-bottom:none;}
-.mlog-item b{color:var(--text);font-weight:500;}
-.mlog-empty{font-size:10px;color:var(--text-muted);}
+.mli{font-size:10px;color:var(--text-muted);padding:3px 0;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;gap:8px;}
+.mli:last-child{border-bottom:none;}
+.mli b{color:var(--text);font-weight:500;}
 
 /* MISC */
 .empty-state{text-align:center;padding:1.5rem;color:var(--text-muted);font-size:12px;line-height:1.7;white-space:pre-line;}
-.muted{color:var(--text-muted)!important;}
-.sml{font-size:10px!important;}
 .toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:12px;padding:8px 16px;border-radius:20px;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
@@ -1118,36 +1207,36 @@ button{cursor:pointer;}
 <body>
 
 <div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">🏨</div>
-    <div class="login-title">Hotel Manager</div>
-    <div class="login-sub">Kirjaudu sisään / Войдите в систему</div>
+  <div class="lcard">
+    <div class="llogo">🏨</div>
+    <div class="ltitle">Hotel Manager</div>
+    <div class="lsub">Kirjaudu sisään · Войдите в систему</div>
     <input type="email"    id="l-email" placeholder="Email" autocomplete="username">
     <input type="password" id="l-pass"  placeholder="Salasana / Пароль" autocomplete="current-password">
-    <button class="login-btn" onclick="doLogin()">Kirjaudu / Войти</button>
+    <button class="lbtn" onclick="doLogin()">Kirjaudu / Войти</button>
     <div id="login-error"></div>
   </div>
 </div>
 
 <div id="app-screen">
   <div class="appbar">
-    <div class="appbar-left">
-      <div class="appbar-name" id="user-name"></div>
-      <div class="appbar-role" id="user-role"></div>
+    <div class="abl">
+      <div class="abn" id="u-name"></div>
+      <div class="abr" id="u-role"></div>
     </div>
-    <button class="logout-btn" onclick="doLogout()" id="logout-btn">Выйти</button>
+    <button class="logout-btn" id="logout-btn" onclick="doLogout()">Выйти</button>
   </div>
 
   <div class="stats-row">
-    <div class="stat"><div class="stat-num n-occ" id="s-occ">0</div><div class="stat-lbl" id="sl-occ">Занято</div></div>
-    <div class="stat"><div class="stat-num n-emp" id="s-emp">0</div><div class="stat-lbl" id="sl-emp">Свободно</div></div>
-    <div class="stat"><div class="stat-num n-need" id="s-need">0</div><div class="stat-lbl" id="sl-need">Убрать</div></div>
-    <div class="stat"><div class="stat-num n-done" id="s-done">0</div><div class="stat-lbl" id="sl-done">Убрано</div></div>
+    <div class="stat"><div class="stat-num n-occ" id="s-occ">0</div><div class="stat-lbl">Занято</div></div>
+    <div class="stat"><div class="stat-num n-emp" id="s-emp">0</div><div class="stat-lbl">Свободно</div></div>
+    <div class="stat"><div class="stat-num n-need" id="s-need">0</div><div class="stat-lbl">Убрать</div></div>
+    <div class="stat"><div class="stat-num n-done" id="s-done">0</div><div class="stat-lbl">Убрано</div></div>
   </div>
 
   <div class="bkf-bar">
     <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div><div class="bkf-big" id="bkf-total">0</div><div class="bkf-sub-lbl2" id="bkf-lbl">Завтраков сегодня</div></div>
+      <div><div class="bkf-big2" id="bkf-total">0</div><div class="bkf-lbl2">завтраков сегодня</div></div>
     </div>
     <div class="bkf-times" id="bkf-times"></div>
   </div>
