@@ -79,6 +79,9 @@ const TR = {
     without_bkf:"Без завтр.",
     skip:"пропуск", restored:"восстановлен",
     checkins_today:"Въезды", checkouts_today:"Выезды",
+    schedule:"Расписание", clean_plan:"План уборок", no_clean_days:"Нет запланированных уборок на эти дни",
+    checkout_lbl:"Выезд — нужна уборка", checkin_lbl:"Въезд — подготовить", occupied_lbl:"Занят",
+    status_clean:"Убрано", status_dirty:"Не убрано", status_skip:"Не убирать",
   },
   fi: {
     rooms:"Huoneet", tasks:"Tehtävät", mytasks:"Omat tehtävät", breakfast:"Aamiaiset",
@@ -129,6 +132,9 @@ const TR = {
     without_bkf:"Ei aamiaista",
     skip:"ohitettu", restored:"palautettu",
     checkins_today:"Saapumiset", checkouts_today:"Lähdöt",
+    schedule:"Aikataulu", clean_plan:"Siivoussuunnitelma", no_clean_days:"Ei suunniteltuja siivouksia",
+    checkout_lbl:"Uloskirjaus — siivous", checkin_lbl:"Sisäänkirjaus — valmistele", occupied_lbl:"Varattu",
+    status_clean:"Siivottu", status_dirty:"Siivottava", status_skip:"Älä siivoa",
   }
 };
 
@@ -638,10 +644,10 @@ function updateStats() {
 
 function renderTabs() {
   const tabs =
-    me.role==='hotel'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}] :
-    me.role==='senior'  ? [{k:'queue',l:t('tasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'log',l:t('log')}] :
-    me.role==='admin'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'users',l:t('users')},{k:'settings',l:t('settings')},{k:'log',l:t('log')}] :
-                          [{k:'mytasks',l:t('mytasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')}];
+    me.role==='hotel'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'schedule',l:t('schedule')},{k:'log',l:t('log')}] :
+    me.role==='senior'  ? [{k:'queue',l:t('tasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'schedule',l:t('schedule')},{k:'log',l:t('log')}] :
+    me.role==='admin'   ? [{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'schedule',l:t('schedule')},{k:'users',l:t('users')},{k:'settings',l:t('settings')},{k:'log',l:t('log')}] :
+                          [{k:'mytasks',l:t('mytasks')},{k:'rooms',l:t('rooms')},{k:'breakfast',l:t('breakfast')},{k:'schedule',l:t('schedule')}];
   document.getElementById('main-tabs').innerHTML=tabs
     .map(tb=>`<button class="mt${mainTab===tb.k?' active':''}" data-k="${tb.k}" onclick="setMainTab('${tb.k}')">${tb.l}</button>`).join('');
 }
@@ -678,12 +684,11 @@ function roomsGridHTML(clickable) {
 }
 
 function bkfTodayHTML() {
-  const viewDs=addDays(todayStr(),dayOffset-1);
-  // fix: addDays adds to today, but we need offset from today
-  const baseDate=new Date(); baseDate.setDate(baseDate.getDate()+dayOffset);
-  const viewDsFixed=ds(baseDate);
-  const{total,map}=calcBkfDay(viewDsFixed);
-  const dayLbl=dayOffset===0?t('today'):dayOffset===1?t('tomorrow'):dayOffset===-1?t('yesterday'):`${dayName(viewDsFixed,lang)}, ${fd(viewDsFixed)}`;
+  const baseDate=new Date();
+  baseDate.setDate(baseDate.getDate()+dayOffset);
+  const viewDs=ds(baseDate);
+  const{total,map}=calcBkfDay(viewDs);
+  const dayLbl=dayOffset===0?t('today'):dayOffset===1?t('tomorrow'):dayOffset===-1?t('yesterday'):`${dayName(viewDs,lang)}, ${fd(viewDs)}`;
   const keys=Object.keys(map).sort();
   const groups=keys.map(k=>{
     const os=map[k]; const cnt=os.reduce((s,o)=>s+(o.guests||1),0);
@@ -694,7 +699,7 @@ function bkfTodayHTML() {
   }).join('')||`<div class="empty-state">${t('no_queue')}</div>`;
   return`<div class="day-nav">
     <button onclick="dayOffset--;renderContent()">‹</button>
-    <div><div class="day-lbl">${dayLbl}</div><div class="day-sub-l">${fd(viewDsFixed)}</div></div>
+    <div><div class="day-lbl">${dayLbl}</div><div class="day-sub-l">${fd(viewDs)}</div></div>
     <button onclick="dayOffset++;renderContent()">›</button>
   </div>
   <div class="bkf-sum">
@@ -927,6 +932,70 @@ function settingsHTML() {
   </div>`;
 }
 
+
+function scheduleHTML() {
+  const days = 7;
+  let html = '';
+  for(let i=0; i<days; i++){
+    const baseDate = new Date();
+    baseDate.setDate(baseDate.getDate()+i);
+    const dateS = ds(baseDate);
+    const dayLbl = i===0?t('today'):i===1?t('tomorrow'):`${dayName(dateS,lang)} ${fd(dateS)}`;
+
+    // Find objects needing cleaning this day
+    const checkouts = Object.values(objects).filter(o =>
+      hasFeat(o.typeId,'cleaning') && o.checkoutDate===dateS
+    );
+    const checkins = Object.values(objects).filter(o =>
+      hasFeat(o.typeId,'cleaning') && o.checkinDate===dateS && !o.checkout
+    );
+    const occupied = Object.values(objects).filter(o =>
+      hasFeat(o.typeId,'cleaning') && o.occupied && !o.checkout &&
+      o.checkinDate && o.checkoutDate &&
+      dateS>=o.checkinDate && dateS<=o.checkoutDate
+    );
+
+    if(!checkouts.length && !checkins.length) continue;
+
+    html += `<div class="sched-day">
+      <div class="sched-day-hd">
+        <div class="sched-day-lbl">${dayLbl}</div>
+        <div class="sched-day-date">${fd(dateS)}</div>
+      </div>`;
+
+    if(checkouts.length){
+      html += `<div class="sched-section-lbl checkout-lbl">↑ ${t('checkout_lbl')}</div>`;
+      html += `<div class="sched-pills">` + checkouts.map(o=>{
+        const cleanIcon = o.cleanStatus==='cleaned'?'🔵':o.skipClean?'⚪':'🔴';
+        const cleanLbl  = o.cleanStatus==='cleaned'?t('status_clean'):o.skipClean?t('status_skip'):t('status_dirty');
+        return`<div class="sched-pill co">
+          <span class="sched-obj-name">${o.name}</span>
+          <span class="sched-type">${typeName(o.typeId)}</span>
+          <span class="sched-clean">${cleanIcon} ${cleanLbl}</span>
+        </div>`;
+      }).join('') + `</div>`;
+    }
+
+    if(checkins.length){
+      html += `<div class="sched-section-lbl checkin-lbl">↓ ${t('checkin_lbl')}</div>`;
+      html += `<div class="sched-pills">` + checkins.map(o=>{
+        const cleanIcon = o.cleanStatus==='cleaned'?'🔵':o.skipClean?'⚪':'🔴';
+        const cleanLbl  = o.cleanStatus==='cleaned'?t('status_clean'):o.skipClean?t('status_skip'):t('status_dirty');
+        return`<div class="sched-pill ci">
+          <span class="sched-obj-name">${o.name}</span>
+          <span class="sched-type">${typeName(o.typeId)}</span>
+          <span class="sched-clean">${cleanIcon} ${cleanLbl}</span>
+        </div>`;
+      }).join('') + `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  if(!html) return `<div class="empty-state">${t('no_clean_days')}</div>`;
+  return `<div class="section-lbl">${t('clean_plan')} — 7 ${t('days') || 'дней'}</div>${html}`;
+}
+
 function renderContent() {
   const mc=document.getElementById('main-content'); if(!mc)return;
   const canClick=me.role==='hotel'||me.role==='admin';
@@ -952,6 +1021,8 @@ function renderContent() {
     html=queueHTML()+`<div class="section-lbl" style="margin-top:.75rem;">${t('rooms')}</div><div class="rooms-grid">${roomsGridHTML(false)}</div>`;
   } else if(mainTab==='mytasks'){
     html=myTasksHTML();
+  } else if(mainTab==='schedule'){
+    html=scheduleHTML();
   } else if(mainTab==='users'){
     html=usersHTML();
   } else if(mainTab==='settings'){
@@ -1212,6 +1283,22 @@ button{cursor:pointer;}
 
 /* MISC */
 .empty-state{text-align:center;padding:1.5rem;color:var(--text-muted);font-size:12px;line-height:1.7;white-space:pre-line;}
+
+.sched-day{border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;background:var(--sur);}
+.sched-day-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sched-day-lbl{font-size:13px;font-weight:500;}
+.sched-day-date{font-size:11px;color:var(--text-muted);}
+.sched-section-lbl{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;margin-top:6px;}
+.checkout-lbl{color:var(--orange);}
+.checkin-lbl{color:var(--green);}
+.sched-pills{display:flex;flex-direction:column;gap:4px;margin-bottom:4px;}
+.sched-pill{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--rs);font-size:11px;}
+.sched-pill.co{background:var(--ol);}
+.sched-pill.ci{background:var(--gl);}
+.sched-obj-name{font-weight:500;min-width:40px;}
+.sched-type{color:var(--text-muted);font-size:10px;flex:1;}
+.sched-clean{font-size:10px;white-space:nowrap;}
+
 .toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:12px;padding:8px 16px;border-radius:20px;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
