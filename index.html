@@ -62,7 +62,9 @@ const TR = {
     fill_req:"Заполни обязательные поля",
     access_off:"Доступ отключён. Обратитесь к администратору.",
     wrong_pass:"Неверный email или пароль",
-    type_name:"Название типа",
+    type_name:"Название типа (рус.)",
+    type_name_fi:"Название на финском",
+    type_name_fi_ph:"esim. Huone",
     features:"Функции типа",
     feat_clean:"Уборка",
     feat_occupied:"Занят/свободен",
@@ -110,7 +112,9 @@ const TR = {
     fill_req:"Täytä pakolliset kentät",
     access_off:"Pääsy estetty.",
     wrong_pass:"Väärä sähköposti tai salasana",
-    type_name:"Tyypin nimi",
+    type_name:"Tyypin nimi (fin.)",
+    type_name_fi:"Nimi suomeksi",
+    type_name_fi_ph:"esim. Huone",
     features:"Ominaisuudet",
     feat_clean:"Siivous",
     feat_occupied:"Varattu/vapaa",
@@ -188,7 +192,7 @@ async function addLog(objId, action, color) {
 
 // ── Тип объекта — функции ─────────────────────
 function getType(typeId) { return objTypes[typeId]||{}; }
-function typeName(typeId) { return getType(typeId).name || typeId || ''; }
+function typeName(typeId) { const tp=getType(typeId); if(!tp.name)return typeId||''; if(lang==='fi'&&tp.nameFi)return tp.nameFi; return tp.name; }
 function hasFeat(typeId, feat) {
   const tp = getType(typeId);
   if(!tp.features) return false;
@@ -408,8 +412,9 @@ async function saveObjType() {
     guests:    !!document.getElementById('nt-guests')?.checked,
     breakfast: !!document.getElementById('nt-bkf')?.checked,
   };
-  const nr=push(ref(db,'objTypes'));
-  await set(nr,{id:nr.key,name:nameEl.value,features:feats});
+  const nameFiEl=document.getElementById("nt-namefi");
+  const nr=push(ref(db,"objTypes"));
+  await set(nr,{id:nr.key,name:nameEl.value,nameFi:nameFiEl?.value||nameEl.value,features:feats});
   nameEl.value='';
   showToast(t('saved'));
 }
@@ -424,7 +429,8 @@ async function updateObjType(typeId) {
     guests:    !!document.getElementById(`tf-guests-${typeId}`)?.checked,
     breakfast: !!document.getElementById(`tf-bkf-${typeId}`)?.checked,
   };
-  await update(ref(db,`objTypes/${typeId}`),{name:nameEl.value,features:feats});
+  const nameFiEl=document.getElementById(`tnamefi-${typeId}`);
+  await update(ref(db,`objTypes/${typeId}`),{name:nameEl.value,nameFi:nameFiEl?.value||nameEl.value,features:feats});
   showToast(t('saved'));
 }
 window.updateObjType=updateObjType;
@@ -844,8 +850,11 @@ function settingsHTML() {
   const objList=sortedObjects();
 
   // Типы объектов
-  const typeRows=typeList.map(tp=>`<div class="adm-row">
-    <input type="text" id="tname-${tp.id}" value="${tp.name}" class="uin" style="max-width:110px;">
+  const typeRows=typeList.map(tp=>`<div class="adm-row" style="flex-wrap:wrap;gap:5px;">
+    <div style="display:flex;gap:4px;flex:1;min-width:200px;">
+      <input type="text" id="tname-${tp.id}"   value="${tp.name}"       placeholder="Рус." class="uin" style="max-width:100px;">
+      <input type="text" id="tnamefi-${tp.id}" value="${tp.nameFi||''}" placeholder="Fin." class="uin" style="max-width:100px;">
+    </div>
     <div class="feat-checks">
       <label><input type="checkbox" id="tf-clean-${tp.id}"  ${tp.features?.cleaning ?'checked':''}> ${t('feat_clean')}</label>
       <label><input type="checkbox" id="tf-occ-${tp.id}"    ${tp.features?.occupied ?'checked':''}> ${t('feat_occupied')}</label>
@@ -878,7 +887,10 @@ function settingsHTML() {
     <div class="adm-title">${t('obj_types')}</div>
     <div style="max-height:200px;overflow-y:auto;">${typeRows}</div>
     <div class="new-form" style="margin-top:10px;">
-      <input type="text" id="nt-name" placeholder="${t('type_name')}" class="uin">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+        <input type="text" id="nt-name"   placeholder="${t('type_name')}"    class="uin">
+        <input type="text" id="nt-namefi" placeholder="${t('type_name_fi')}" class="uin">
+      </div>
       <div class="feat-checks">
         <label><input type="checkbox" id="nt-clean"  checked> ${t('feat_clean')}</label>
         <label><input type="checkbox" id="nt-occ"    checked> ${t('feat_occupied')}</label>
